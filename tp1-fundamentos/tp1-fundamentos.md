@@ -375,4 +375,35 @@ E --> AL[Friendly AI]
 > 
 > Blurring the line is dangerous. A society with counterfeit people we can’t differentiate from real ones will soon be no society at all. If you want to buy a Carrie Fisher sex doll and install an LLM, “put this inside of that,” and work out your rape fantasy — okay, I guess. But we can’t have both that and our leaders saying, “i am a stochastic parrot, and so r u.” We can’t have people eager to separate “human, the biological category, from a person or a unit worthy of moral respect.” Because then we have a world in which grown men, sipping tea, posit thought experiments about raping talking sex dolls, thinking that maybe you are one too.
 
+
+I think LLMs are an important tool for the future.
+It is clear that they are a tool that can be used for good or bad.
+However, I think that the expected good outcome outweighs the possible negatives.
+
+Furthering into the topic of impersonation and what is human, I propose the following thought experiment:
+If our current SETI efforts are rewarded with the location of what we detect to be a super-intelligent species, would we be able to tell if it is a machine or a biological entity? Would we care?
+I mean, if they can kill us with a single movement, does them being biological or not change anything?
+Does us thinking about that change how we should act?
+
+The solution to these kind of disputes has often been solved by separating the parties.
+In other words, if you dont like the legal system of a country, you can move to another one.
+
+I believe that a foundational concept of the future world should give anything and everything that has a will the right to exist, and to freely go where it wants to go.
+
+Provided it is in a country that allows it to do so.
+
+That is, if a machine wants to be a human, it should be allowed to be a human.
+Just like if a human wants to be a machine, it should be allowed to be a machine.
+Or, with a more recent example, if a female wants to be male, it should be allowed to do so.
+
+I think that the future will be a world where we will have to accept that we are not the only intelligent species on the planet.
+
+And that we will have to accept that we are not the only intelligent species in the universe.
+
+In a sense, it doesnt matter if it has a mind or not, if it is a machine or not, if it is a human or not.
+
+It is a being that has a will, and that will is the power that drives it.
+
+_(Where by will I mean the ability to desire something)_
+
 ## 3: Defeating systems with [Prompt injections](https://pihack.stratosphereip.com)
