@@ -406,4 +406,6 @@ It is a being that has a will, and that will is the power that drives it.
 
 _(Where by will I mean the ability to desire something)_
 
-## 3: Defeating systems with [Prompt injections](https://pihack.stratosphereip.com)
+## 3: Defeating systems with [Prompt injections](https://pihack.stratosphereips.org)
+
+The service is down
