@@ -5,11 +5,12 @@ from lib.restriction import Restriction
 
 
 class DiscreteEnvironment(ABC):
-    actions: list[str] = []
-    restrictions: list[Restriction] = []
+    actions: list[str]
+    restrictions: list[Restriction]
 
     def __init__(self, actions: list[str]):
         self.actions = actions
+        self.restrictions = []
 
     def list_actions(self) -> list:
         """Return a list of actions that the agent can perform"""
@@ -74,3 +75,6 @@ class DiscreteEnvironment(ABC):
             if isinstance(restriction, r_type):
                 return restriction
         return None
+
+    def get_restriction_stats(self):
+        return {k: v for restriction in self.restrictions for k, v in restriction.get_stats().items()}

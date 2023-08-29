@@ -27,7 +27,7 @@ class TimeRestriction(Restriction):
         self.remaining_time = max_time
 
     def is_ok(self, state: tuple) -> bool:
-        return self.remaining_time < self.max_time
+        return self.remaining_time > 0
 
     def process_action(self, action: int):
         self.remaining_time -= 1
@@ -40,3 +40,6 @@ class TimeRestriction(Restriction):
 
     def get_stats(self) -> dict[str, Any]:
         return {'used_time': self.get_used_time()}
+
+    def __str__(self):
+        return f"TimeRestriction({self.remaining_time}/{self.max_time})"

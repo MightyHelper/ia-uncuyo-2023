@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from .discrete_env import DiscreteEnvironment
 
 class DiscreteAgent(ABC):
-    actions: list[str] = []
+    actions: list[str]
 
     def __init__(self, environment: DiscreteEnvironment):
         self.actions = environment.list_actions()

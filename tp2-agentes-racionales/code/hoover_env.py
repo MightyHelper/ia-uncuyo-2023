@@ -9,8 +9,8 @@ from lib.restriction import TimeRestriction
 class HooverDiscreteEnvironment(GridDiscreteEnvironment):
     def __init__(self, dims: np.ndarray, dirt_probability: float = 0.5, max_time=1000):
         self.dirt_probability = dirt_probability
-        self.add_restriction(TimeRestriction(max_time))
         super().__init__(dims)
+        self.add_restriction(TimeRestriction(max_time))
         self.remaining_dirty = np.sum(self.environment)
         self.cleaned_dirty = 0
 
@@ -24,7 +24,6 @@ class HooverDiscreteEnvironment(GridDiscreteEnvironment):
         return self.environment[tuple(self.agent_pos)], self.agent_pos
 
     def _accept_action(self, action) -> None:
-        print("Tick")
         match self.actions[action]:
             case "noop":
                 pass
