@@ -1,10 +1,10 @@
 from lib.discrete_agent import DiscreteAgent
 import numpy as np
-from hoover_env import HooverDiscreteEnvironment
+from lib.grid_discrete_env import GridDiscreteEnvironment
 
 
 class ReflexiveHooverAgent(DiscreteAgent):
-    def __init__(self, environment: HooverDiscreteEnvironment):
+    def __init__(self, environment: GridDiscreteEnvironment):
         super().__init__(environment)
         self.env_dims = environment.dims
         self.n_env_dims = len(self.env_dims)

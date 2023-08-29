@@ -1,8 +1,8 @@
 import numpy as np
-from lib.grid_discrete_env import GridDiscreteEnv
+from lib.grid_discrete_env import GridDiscreteEnvironment
 
 
-class GridTraversalDiscreteEnv(GridDiscreteEnv):
+class GridTraversalDiscreteEnvironment(GridDiscreteEnvironment):
     GOAL = 2
     WALL = 1
     EMPTY = 0

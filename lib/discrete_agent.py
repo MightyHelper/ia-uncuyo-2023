@@ -8,7 +8,7 @@ class DiscreteAgent(ABC):
         self.actions = environment.list_actions()
 
     @abstractmethod
-    def get_action(self, observation: list) -> int:
+    def get_action(self, observation: tuple) -> int:
         pass
 
     @abstractmethod
