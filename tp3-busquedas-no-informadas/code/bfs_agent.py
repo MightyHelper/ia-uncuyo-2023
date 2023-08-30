@@ -2,10 +2,10 @@ import numpy as np
 from lib.discrete_agent import DiscreteAgent
 from grid_traversal_env import GridTraversalDiscreteEnvironment
 
-class DFSDiscreteAgent(DiscreteAgent):
+class BFSDiscreteAgent(DiscreteAgent):
     def __init__(self, env: GridTraversalDiscreteEnvironment):
         self.env = env
-        self.operations = self.compute_operations_stack(self.env.environment, self.env.agent_pos, self.env.target_pos)
+        self.operations = self.compute_operations_queue(self.env.environment, self.env.agent_pos, self.env.target_pos)
         super().__init__(env)
         # self.env.print()
         # print(f"{[self.env.action_to_direction(x) for x in self.operations]=}")
@@ -16,36 +16,15 @@ class DFSDiscreteAgent(DiscreteAgent):
         raise Exception("Am done")
 
     def print(self) -> None:
-        print("DFS Agent")
+        print("BFS Agent")
 
-    def compute_operations(self, environment, agent_pos, target_pos, path=None, visited=None):
-        if visited is None:
-            visited = np.zeros_like(environment, dtype=bool)
-        if path is None:
-            path = []
-        if visited[tuple(agent_pos)]:
-            return
-        if np.all(agent_pos == target_pos):
-            return path
-        visited[tuple(agent_pos)] = True
-        for action in range(len(self.env.actions)):
-            direction = self.env.action_to_direction(action)
-            new_pos = agent_pos + direction
-            if self.env.is_valid_pos(new_pos) and not visited[tuple(new_pos)]:
-                path.append(action)
-                result = self.compute_operations(environment, new_pos, target_pos, path, visited)
-                if result is not None:
-                    return result
-                path.pop()
-        return None
-
-    def compute_operations_stack(self, environment, agent_pos, target_pos):
+    def compute_operations_queue(self, environment, agent_pos, target_pos):
         if np.all(agent_pos == target_pos):
             return []
         visited = np.zeros_like(environment, dtype=bool)
-        stack = [(agent_pos, [])]
-        while len(stack) > 0:
-            cagent_pos, path = stack.pop()
+        queue = [(agent_pos, [])]
+        while len(queue) > 0:
+            cagent_pos, path = queue.pop(0)
             # print("CP", cagent_pos, path, cagent_pos == target_pos, np.all(cagent_pos == target_pos))
             if visited[tuple(cagent_pos)]:
                 continue
@@ -58,10 +37,10 @@ class DFSDiscreteAgent(DiscreteAgent):
                 # print("Testing dir", direction)
                 new_pos = cagent_pos + direction
                 if self.env.is_valid_pos(new_pos) and not visited[tuple(new_pos)]:
-                    stack.append((new_pos, [*path, action]))
-                    # print("ST", stack)
+                    queue.append((new_pos, [*path, action]))
+                    # print("ST", queue)
                 else:
                     pass
                     # print("Invalid", new_pos)
-            # print("ST", stack)
+            # print("ST", queue)
         return None

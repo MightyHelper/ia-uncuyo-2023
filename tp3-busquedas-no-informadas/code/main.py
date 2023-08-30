@@ -14,10 +14,11 @@ import numpy as np
 if __name__ == "__main__":
     np.random.seed(52)
     random.seed(0)
-    df = SearchTester(debug=False, parallel=False, progress=True)([
+    df = SearchTester(debug=False, parallel=True, progress=True)([
         ('environment', ['search']),
-        ('agent_type', ['dfs']),
-        ('env_size', [8]),
+        ('agent_type', ['random', 'bfs', 'dfs', 'dijkstra']),
+        # ('agent_type', ['dijkstra']),
+        ('env_size', [7]),
         ('wall_percent', [0.08]),
         ('n_iter', range(0, 30)),
         ('max_time', [100_000])
@@ -30,12 +31,12 @@ if __name__ == "__main__":
     #     obs = env.initial_state()
     #     while not env.is_done():
     #         obs = env.process_action(agent.get_action(obs))
-    # df = df.convert_dtypes()
-    # df = df.drop(columns=['n_iter', 'max_time'])
-    # arr = ['env_size']
-    # arr2 = ['dirt_percent']
-    # df[arr] = df[arr].astype(int) # cast types
-    # df[arr2] = df[arr2].astype(float)
-    # print(df.dtypes)
-    # df = df.groupby(['environment', 'agent_type', 'env_size', 'dirt_percent']).mean().unstack('dirt_percent', fill_value=-1)
-    # print(df.to_string())
+    df = df.convert_dtypes()
+    df = df.drop(columns=['n_iter', 'max_time'])
+    arr = ['env_size']
+    arr2 = ['wall_percent']
+    df[arr] = df[arr].astype(int) # cast types
+    df[arr2] = df[arr2].astype(float)
+    print(df.dtypes)
+    df = df.groupby(['environment', 'agent_type', 'env_size', 'wall_percent']).mean().unstack('wall_percent', fill_value=-1)
+    print(df.to_string())

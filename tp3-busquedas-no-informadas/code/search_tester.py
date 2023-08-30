@@ -3,6 +3,8 @@ from typing import cast
 import numpy as np
 
 from dfs_agent import DFSDiscreteAgent
+from bfs_agent import BFSDiscreteAgent
+from dijkstra_agent import DijkstraDiscreteAgent
 from grid_traversal_env import GridTraversalDiscreteEnvironment
 
 try:
@@ -34,4 +36,8 @@ class SearchTester(EnvTester):
             return RandomAgent(env)
         elif agent_type == 'dfs':
             return DFSDiscreteAgent(cast(GridTraversalDiscreteEnvironment, env))
+        elif agent_type == 'bfs':
+            return BFSDiscreteAgent(cast(GridTraversalDiscreteEnvironment, env))
+        elif agent_type == 'dijkstra':
+            return DijkstraDiscreteAgent(cast(GridTraversalDiscreteEnvironment, env))
         raise Exception(f"Unknown agent type: {agent_type}")
