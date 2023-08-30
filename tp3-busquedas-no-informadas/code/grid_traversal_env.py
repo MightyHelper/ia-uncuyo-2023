@@ -90,20 +90,20 @@ class GridTraversalDiscreteEnvironment(GridDiscreteEnvironment):
         tmp = self.environment*1
         tmp[tuple(self.agent_pos)] = -1
         tmp[tuple(self.target_pos)] = -2
-        print("Environment: \n")
-        for row in tmp:
-            for cell in row:
-                if cell == self.WALL:
-                    print("#", end=" ")
-                elif cell == self.EMPTY:
-                    print(" ", end=" ")
-                elif cell == -1:
-                    print("\x1b[1;31mA\x1b[0m", end=" ")
-                elif cell == -2:
-                    print("\x1b[1;31mT\x1b[0m", end=" ")
-                else:
-                    print("?", end=" ")
-            print()
+        # print("Environment: \n")
+        # for row in tmp:
+        #     for cell in row:
+        #         if cell == self.WALL:
+        #             print("#", end=" ")
+        #         elif cell == self.EMPTY:
+        #             print(" ", end=" ")
+        #         elif cell == -1:
+        #             print("\x1b[1;31mA\x1b[0m", end=" ")
+        #         elif cell == -2:
+        #             print("\x1b[1;31mT\x1b[0m", end=" ")
+        #         else:
+        #             print("?", end=" ")
+        #     print()
 
 
     def is_solvable(self, candidate_env: np.ndarray):

@@ -5,7 +5,7 @@ from grid_traversal_env import GridTraversalDiscreteEnvironment
 import pandas as pd
 from dfs_agent import DFSDiscreteAgent
 import sys
-sys.setrecursionlimit(100*100*5)
+sys.setrecursionlimit(100*10*5)
 
 
 from search_tester import SearchTester
@@ -14,22 +14,22 @@ import numpy as np
 if __name__ == "__main__":
     np.random.seed(52)
     random.seed(0)
-    # df = SearchTester(debug=False, parallel=True, progress=True)([
-    #     ('environment', ['search']),
-    #     ('agent_type', ['random', 'dfs']),
-    #     ('env_size', [8]),
-    #     ('wall_percent', [0.08]),
-    #     ('n_iter', range(0, 30)),
-    #     ('max_time', [100_000])
-    # ])
-    for i in range(50):
-        print(i)
-        env = GridTraversalDiscreteEnvironment(np.array([100, 100]), 0.08, 100_000)
-        agent = DFSDiscreteAgent(env)
-
-        obs = env.initial_state()
-        while not env.is_done():
-            obs = env.process_action(agent.get_action(obs))
+    df = SearchTester(debug=False, parallel=False, progress=True)([
+        ('environment', ['search']),
+        ('agent_type', ['dfs']),
+        ('env_size', [8]),
+        ('wall_percent', [0.08]),
+        ('n_iter', range(0, 30)),
+        ('max_time', [100_000])
+    ])
+    # for i in range(50):
+    #     print(i)
+    #     env = GridTraversalDiscreteEnvironment(np.array([100, 100]), 0.08, 100_000)
+    #     agent = DFSDiscreteAgent(env)
+    #
+    #     obs = env.initial_state()
+    #     while not env.is_done():
+    #         obs = env.process_action(agent.get_action(obs))
     # df = df.convert_dtypes()
     # df = df.drop(columns=['n_iter', 'max_time'])
     # arr = ['env_size']

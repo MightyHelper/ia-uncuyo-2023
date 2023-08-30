@@ -5,7 +5,7 @@ from grid_traversal_env import GridTraversalDiscreteEnvironment
 class DFSDiscreteAgent(DiscreteAgent):
     def __init__(self, env: GridTraversalDiscreteEnvironment):
         self.env = env
-        self.operations = self.compute_operations(self.env.environment, self.env.agent_pos, self.env.target_pos)
+        self.operations = self.compute_operations_stack(self.env.environment, self.env.agent_pos, self.env.target_pos)
         # self.env.print()
         # print(f"{[self.env.action_to_direction(x) for x in self.operations]=}")
 
