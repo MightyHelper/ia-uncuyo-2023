@@ -31,10 +31,10 @@ class GridDiscreteEnvironment(DiscreteEnvironment, ABC):
         return actions
 
     def init_random_env(self):
-        return np.zeros_like(self.dims)
+        return np.zeros(self.dims)
 
     def initial_state(self) -> tuple[Any, np.ndarray]:
-        return self.environment[tuple(self.agent_pos)], self.agent_pos
+        return self.get_state()
 
     def action_to_direction(self, action):
         direction_code = action - self.__non_move_actions
