@@ -14,40 +14,15 @@ class GridTraversalDiscreteEnvironment(GridDiscreteEnvironment):
         self.wall_probability = wall_probability
         self.dims = dims
         super().__init__(dims)
+        self.target_pos = self.gen_random_pos()
         self.add_restriction(TimeRestriction(max_time))
         self.initial_distance = np.linalg.norm(self.target_pos - self.agent_pos)
 
     def init_random_env(self):
-        # Generate random solution path
-        path = [self.agent_pos]
-        points_in_path = np.zeros(self.dims, dtype=bool)
-        path_length = self.gen_random_pos().dot(np.ones_like(self.agent_pos))
-        total_size = self.dims.dot(np.ones_like(self.agent_pos))
-        loop_limit = path_length * 10
-        while len(path) < path_length and loop_limit > 0:
-            loop_limit -= 1
-            direction = self.action_to_direction(random.randint(0, len(self.actions) - 1))
-            new_pos = path[-1] + direction
-            if not self.is_out_of_bounds(new_pos):
-                if points_in_path[tuple(new_pos)]:
-                    continue
-                points_in_path[tuple(new_pos)] = True
-                path.append(new_pos)
-        self.target_pos = path[-1]
-        # Generate random environment
-        # candidate_env = np.random.random(self.dims) < self.wall_probability
-        # Adjust probability to keep wall count the same on average
-        expected_walls = int(total_size * self.wall_probability)
-        remaining_size = total_size - len(path)
-        adjusted_probability = expected_walls / remaining_size
-        # print(f"Expected walls: {expected_walls}, remaining size: {remaining_size}, old probability: {self.wall_probability}adjusted probability: {adjusted_probability}")
-        candidate_env = np.random.random(self.dims) < (adjusted_probability)
-        # Add solution path
-        for pos in path:
-            candidate_env[tuple(pos)] = self.EMPTY
-        # self.is_solvable(candidate_env)
-        return candidate_env
+        return np.random.random(self.dims) < self.wall_probability
 
+    def generate_actions(self, dims) -> list[str]:
+        return ["halt"] + self.generate_move_actions(dims)
 
     def get_performance(self) -> float:
         # return self.target_pos.distance(self.agent_pos)
@@ -90,20 +65,20 @@ class GridTraversalDiscreteEnvironment(GridDiscreteEnvironment):
         tmp = self.environment*1
         tmp[tuple(self.agent_pos)] = -1
         tmp[tuple(self.target_pos)] = -2
-        # print("Environment: \n")
-        # for row in tmp:
-        #     for cell in row:
-        #         if cell == self.WALL:
-        #             print("#", end=" ")
-        #         elif cell == self.EMPTY:
-        #             print(" ", end=" ")
-        #         elif cell == -1:
-        #             print("\x1b[1;31mA\x1b[0m", end=" ")
-        #         elif cell == -2:
-        #             print("\x1b[1;31mT\x1b[0m", end=" ")
-        #         else:
-        #             print("?", end=" ")
-        #     print()
+        print("Environment: \n")
+        for row in tmp:
+            for cell in row:
+                if cell == self.WALL:
+                    print("#", end="  ")
+                elif cell == self.EMPTY:
+                    print(" ", end="  ")
+                elif cell == -1:
+                    print("\x1b[1;32mA\x1b[0m", end="  ")
+                elif cell == -2:
+                    print("\x1b[1;31mT\x1b[0m", end="  ")
+                else:
+                    print("?", end="  ")
+            print()
 
 
     def is_solvable(self, candidate_env: np.ndarray):

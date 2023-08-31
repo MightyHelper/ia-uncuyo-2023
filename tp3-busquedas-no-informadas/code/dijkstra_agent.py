@@ -13,7 +13,7 @@ class DijkstraDiscreteAgent(DiscreteAgent):
     def get_action(self, observation: tuple) -> int:
         if len(self.operations) > 0:
             return self.operations.pop(0)
-        raise Exception("Am done")
+        return 0
 
     def print(self) -> None:
         print("BFS Agent")
@@ -32,10 +32,10 @@ class DijkstraDiscreteAgent(DiscreteAgent):
             if visit_weight[tuple(cagent_pos)] < len(path):
                 continue
             visit_weight[tuple(cagent_pos)] = len(path)
-            for action in range(len(self.env.actions)):
+            for action in range(1, len(self.env.actions)):
                 direction = self.env.action_to_direction(action)
                 new_pos = cagent_pos + direction
                 if self.env.is_valid_pos(new_pos) and not will_visit[tuple(new_pos)] and visit_weight[tuple(cagent_pos)] + 1 < visit_weight[tuple(new_pos)]:
                     will_visit[tuple(new_pos)] = True
                     queue.append((new_pos, [*path, action]))
-        return None
+        return []

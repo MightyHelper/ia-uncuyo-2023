@@ -13,7 +13,7 @@ class DFSDiscreteAgent(DiscreteAgent):
     def get_action(self, observation: tuple) -> int:
         if len(self.operations) > 0:
             return self.operations.pop(0)
-        raise Exception("Am done")
+        return 0
 
     def print(self) -> None:
         print("DFS Agent")
@@ -37,7 +37,7 @@ class DFSDiscreteAgent(DiscreteAgent):
                 if result is not None:
                     return result
                 path.pop()
-        return None
+        return []
 
     def compute_operations_stack(self, environment, agent_pos, target_pos):
         if np.all(agent_pos == target_pos):
@@ -53,7 +53,7 @@ class DFSDiscreteAgent(DiscreteAgent):
                 # print("Solved")
                 return path
             visited[tuple(cagent_pos)] = True
-            for action in range(len(self.env.actions)):
+            for action in range(1, len(self.env.actions)):
                 direction = self.env.action_to_direction(action)
                 # print("Testing dir", direction)
                 new_pos = cagent_pos + direction
@@ -64,4 +64,4 @@ class DFSDiscreteAgent(DiscreteAgent):
                     pass
                     # print("Invalid", new_pos)
             # print("ST", stack)
-        return None
+        return []
