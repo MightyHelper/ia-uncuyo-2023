@@ -52,13 +52,14 @@ if __name__ == "__main__":
     #     environment.disp()
     print("Generated", flush=True)
     agent_types = ['random', 'dfs', 'bfs', 'dijkstra']
+    repeats = 10
     with mp.Pool(n_envs) as pool:
-        states = [(agent_type, env) for env in environments for agent_type in agent_types]
+        states = [(agent_type, env) for env in environments for agent_type in agent_types for _ in range(repeats)]
         print("Running", flush=True)
         results = pool.starmap(gen_simulate_agent_env, states)
         df = pd.DataFrame(results)
         df = df.sort_values(by=['agent_type', 'used_time', 'performance'])
         print(df.to_string())
-        print(df.groupby(['agent_type']).mean().to_string())
+        print(df.drop(columns=['env']).groupby(['agent_type']).mean().to_string())
         print(df.drop(columns=['agent_type']).groupby(['env']).mean().to_string())
-        print(df.pivot_table(index=['env'], columns=['agent_type'], values=['performance']).to_string())
+        print(df.pivot_table(index=['env'], columns=['agent_type'], values=['performance', 'used_time']).to_string())

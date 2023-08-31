@@ -27,7 +27,9 @@ class GridTraversalDiscreteEnvironment(GridDiscreteEnvironment):
     def get_performance(self) -> float:
         # return self.target_pos.distance(self.agent_pos)
         if self.initial_distance == 0: return 1
-        return (1 - np.linalg.norm(self.target_pos - self.agent_pos) / self.initial_distance) ** 2  # MSE
+        dist_between = np.linalg.norm(self.target_pos - self.agent_pos)
+        if dist_between == 0: return 1
+        return np.exp(-dist_between / self.initial_distance)
 
     def get_state(self) -> Any:
         return self.environment, self.agent_pos
