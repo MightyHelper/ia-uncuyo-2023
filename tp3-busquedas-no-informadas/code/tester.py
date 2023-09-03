@@ -58,6 +58,15 @@ def write_report(info_tables, data_to_plot, df, env_filenames):
 
 def plot_csv(df, f):
     f.write(f"```csv\n{df.to_csv()}\n```")
+    with open('../no-informada-results.csv', 'w') as f2:
+        # Rename the index to 'run_n'
+        df.index.name = 'run_n'
+        df = df.rename(columns={'agent_type': 'algorithm_name', 'env': 'estate_n'})
+        df['solution_found'] = df['performance'] == 1.0
+        df = df.drop(columns=['performance', 'used_time'])
+        df = df.reset_index()
+        df = df[['algorithm_name', 'run_n', 'estate_n', 'solution_found']]
+        f2.write(df.to_csv())
 
 
 def plot_envs(env_filenames, f):
@@ -79,14 +88,13 @@ def plot_md_tables(f, plots):
         f.write(f"### {name}\n{plot.to_markdown()}\n")
 
 
-def plot_results(deagg_plots, f):
-    for (title, desc), plot in deagg_plots.items():
+def plot_results(results, f):
+    for (title, desc), plot in results.items():
         f.write(f"## Plot {title}\n")
         plot = plot[title]
         plot_title = f"{title} ({desc})"
         plot_and_out(f, title, f"Box_{title}_log.png", plot.plot(kind='box', logy=True, title=plot_title))
-        plot_and_out(f, title, f"Bar_{title}_log.png",
-                     plot.plot(kind='bar', legend=False, subplots=True, logy=True, title=plot_title)[0])
+        plot_and_out(f, title, f"Bar_{title}_log.png", plot.plot(kind='bar', legend=False, subplots=True, logy=True, title=plot_title)[0])
         f.write("\n")
 
 
@@ -113,39 +121,52 @@ def do_aggregation(dfg):
 
 
 def main():
-    n_envs = 32
-    env_size = 100
+    n_envs = 30
+    env_size = 100 # n x n
     wall_percent = 0.08
-    max_time = 100_00
+    max_time = 10_000 # Max time to simulate if not solved
+    env_filenames, environments = generate_environments(env_size, max_time, n_envs, wall_percent)
+    results = test_agents(environments, n_envs)
+    analyse_results(env_filenames, results)
 
-    with mp.Pool(n_envs) as pool:
-        states = [(env_size, i, max_time, wall_percent) for i in range(0, n_envs)]
-        print("Generating", flush=True)
-        result = [*tqdm.tqdm(pool.istarmap(generate_env, states), total=len(states))]
-        env_filenames = [x[0] for x in result]
-        environments = [x[1] for x in result]
 
-    print("Generated", flush=True)
+def analyse_results(env_filenames, results):
+    df = pd.DataFrame(results)
+    df = df.sort_values(by=['agent_type', 'used_time', 'performance'])
+    performance_of_agents_by_env = df.pivot_table(index=['env'], columns=['agent_type'],
+                                                  values=['performance', 'used_time'])
+    used_time_by_env = do_aggregation(df.drop(columns=['agent_type']).groupby(['env']))
+    agent_used_time = do_aggregation(df.drop(columns=['env']).groupby(['agent_type']))
+    info_tables = {
+        'Performance of agents by environment': performance_of_agents_by_env,
+        'Used time / performance by environment': used_time_by_env,
+        'Used time / performance by agent': agent_used_time
+    }
+    data_to_plot = {
+        ('performance', 'Higher is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
+        ('used_time', 'Lower is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
+    }
+    write_report(info_tables, data_to_plot, df, env_filenames)
+
+
+def test_agents(environments, n_envs):
+    print("Testing agents...", flush=True)
     agent_types = ['random', 'dfs', 'bfs', 'dijkstra']
     with mp.Pool(n_envs) as pool:
         states = [(agent_type, env) for env in environments for agent_type in agent_types]
-        print("Running", flush=True)
-        results = [*tqdm.tqdm(pool.istarmap(gen_simulate_agent_env, states), total=len(states))] # results = pool.starmap(gen_simulate_agent_env, states)
-        df = pd.DataFrame(results)
-        df = df.sort_values(by=['agent_type', 'used_time', 'performance'])
-        performance_of_agents_by_env = df.pivot_table(index=['env'], columns=['agent_type'], values=['performance', 'used_time'])
-        used_time_by_env = do_aggregation(df.drop(columns=['agent_type']).groupby(['env']))
-        agent_used_time = do_aggregation(df.drop(columns=['env']).groupby(['agent_type']))
-        info_tables = {
-            'Performance of agents by environment': performance_of_agents_by_env,
-            'Used time / performance by environment': used_time_by_env,
-            'Used time / performance by agent': agent_used_time
-        }
-        data_to_plot = {
-            ('performance', 'Higher is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
-            ('used_time', 'Lower is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
-        }
-        write_report(info_tables, data_to_plot, df, env_filenames)
+        results = [*tqdm.tqdm(pool.istarmap(gen_simulate_agent_env, states),
+                              total=len(states))]  # results = pool.starmap(gen_simulate_agent_env, states)
+    return results
+
+
+def generate_environments(env_size, max_time, n_envs, wall_percent):
+    print("Generating Environments", flush=True)
+    with mp.Pool(n_envs) as pool:
+        states = [(env_size, i, max_time, wall_percent) for i in range(0, n_envs)]
+        result = [*tqdm.tqdm(pool.istarmap(generate_env, states), total=len(states))]
+        env_filenames = [x[0] for x in result]
+        environments = [x[1] for x in result]
+    return env_filenames, environments
 
 
 def generate_env(env_size, i, max_time, wall_percent):
