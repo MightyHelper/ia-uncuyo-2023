@@ -7,8 +7,6 @@ class BFSDiscreteAgent(DiscreteAgent):
         self.env = env
         self.operations = self.compute_operations_queue(self.env.environment, self.env.agent_pos, self.env.target_pos)
         super().__init__(env)
-        # self.env.print()
-        # print(f"{[self.env.action_to_direction(x) for x in self.operations]=}")
 
     def get_action(self, observation: tuple) -> int:
         if len(self.operations) > 0:
@@ -28,18 +26,11 @@ class BFSDiscreteAgent(DiscreteAgent):
             if visited[tuple(cagent_pos)]:
                 continue
             if np.all(cagent_pos == target_pos):
-                # print("Solved")
                 return path
             visited[tuple(cagent_pos)] = True
             for action in range(1, len(self.env.actions)):
                 direction = self.env.action_to_direction(action)
-                # print("Testing dir", direction)
                 new_pos = cagent_pos + direction
                 if self.env.is_valid_pos(new_pos) and not visited[tuple(new_pos)]:
                     queue.append((new_pos, [*path, action]))
-                    # print("ST", queue)
-                else:
-                    pass
-                    # print("Invalid", new_pos)
-            # print("ST", queue)
         return []

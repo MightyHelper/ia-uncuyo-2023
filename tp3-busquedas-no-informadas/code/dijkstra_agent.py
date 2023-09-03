@@ -7,8 +7,6 @@ class DijkstraDiscreteAgent(DiscreteAgent):
         self.env = env
         self.operations = self.compute_operations_dj(self.env.environment, self.env.agent_pos, self.env.target_pos)
         super().__init__(env)
-        # self.env.print()
-        # print(f"{[self.env.action_to_direction(x) for x in self.operations]=}")
 
     def get_action(self, observation: tuple) -> int:
         if len(self.operations) > 0:
@@ -16,7 +14,7 @@ class DijkstraDiscreteAgent(DiscreteAgent):
         return 0
 
     def print(self) -> None:
-        print("BFS Agent")
+        print("Dijkstra Agent")
 
     def compute_operations_dj(self, environment, agent_pos, target_pos):
         if np.all(agent_pos == target_pos):

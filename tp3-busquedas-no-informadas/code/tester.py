@@ -4,12 +4,16 @@ from grid_traversal_env import GridTraversalDiscreteEnvironment
 from dfs_agent import DFSDiscreteAgent
 from bfs_agent import BFSDiscreteAgent
 from dijkstra_agent import DijkstraDiscreteAgent
+import matplotlib.pyplot as plt
 import numpy as np
 import multiprocessing as mp
+import tqdm
 
 from lib.discrete_agent import DiscreteAgent
 from lib.discrete_env import DiscreteEnvironment
 from lib.random_discrete_agent import RandomAgent
+# noinspection PyUnresolvedReferences
+import lib.istarmap_pool # Do not delete
 
 import matplotlib as mpl
 
@@ -41,87 +45,116 @@ def gen_simulate_agent_env(agent_type: str, env: GridTraversalDiscreteEnvironmen
     return metadata
 
 
-def write_report():
-    global i, plot
+def write_report(info_tables, data_to_plot, df, env_filenames):
     with open('../tp3-reporte.md', 'w') as f:
         f.write("# TP3 Report\n")
-        f.write("## Data plots\n")
-        for i, plot in enumerate(deagg_plots):
-            f.write(f"## Plot {i}\n")
-            plot_and_out(f, i, f"{i}_0.png", plot.plot(kind='box', title='Natrual'))
-            plot_and_out(f, i, f"{i}_1.png", plot.plot(kind='box', logy=True, title='Logarithmic'))
-            plot_and_out2(f, i, f"{i}_3.png", plot.plot(kind='bar', legend=False, subplots=True, title=agent_types))
-            plot_and_out2(f, i, f"{i}_4.png", plot.plot(kind='bar', legend=False, subplots=True, logy=True, title=agent_types))
-            f.write("\n")
+        f.write("## Data plots\n");plot_results(data_to_plot, f)
+        f.write("## Environments\n");plot_envs(env_filenames, f)
+        f.write("## Tabular data\n");plot_md_tables(f, info_tables)
+        f.write("## Data\n");plot_pd_tables(f, info_tables)
+        f.write("## Raw Data\n");plot_csv(df, f)
+        f.write("\n")
 
-        f.write("## Tabular data\n")
-        for name, plot in plots.items():
-            f.write(f"## {name}\n")
-            f.write(plot.to_markdown())
-            f.write("\n")
-        f.write("## Data\n")
-        for name, plot in plots.items():
-            f.write(f"## {name}\n")
-            f.write("```pd\n")
-            f.write(plot.to_string())
-            f.write("\n```\n")
-        f.write("## Raw Data\n")
-        f.write("```csv\n")
-        f.write(df.to_csv())
-        f.write("\n```")
+
+def plot_csv(df, f):
+    f.write(f"```csv\n{df.to_csv()}\n```")
+
+
+def plot_envs(env_filenames, f):
+    f.write("Green = Start pos\n\n")
+    f.write("Red = Target pos\n\n")
+    for i, filename in enumerate(env_filenames):
+        f.write(f"![Environment {i}]({filename[len('../'):]})\n")
+        f.write("\n")
+
+
+def plot_pd_tables(f, plots):
+    for name, plot in plots.items():
+        f.write(f"### {name}\n```pd\n{plot.to_string()}\n```\n")
+    f.write("\n")
+
+
+def plot_md_tables(f, plots):
+    for name, plot in plots.items():
+        f.write(f"### {name}\n{plot.to_markdown()}\n")
+
+
+def plot_results(deagg_plots, f):
+    for (title, desc), plot in deagg_plots.items():
+        f.write(f"## Plot {title}\n")
+        plot = plot[title]
+        plot_title = f"{title} ({desc})"
+        plot_and_out(f, title, f"Box_{title}_log.png", plot.plot(kind='box', logy=True, title=plot_title))
+        plot_and_out(f, title, f"Bar_{title}_log.png",
+                     plot.plot(kind='bar', legend=False, subplots=True, logy=True, title=plot_title)[0])
         f.write("\n")
 
 
 def plot_and_out(file, index, file_name, df):
-    df.get_figure().savefig(f"../plots/{file_name}")
+    fig = df.get_figure()
+    fig.tight_layout()  # Avoid overlapping labels
+    fig.autofmt_xdate(rotation=90)  # Rotate x labels 90 deg
+    fig.savefig(f"../plots/{file_name}")
     file.write(f"![Plot {index}](plots/{file_name})\n")
 
 
-def plot_and_out2(file, index, file_name, df):
-    for i, x in enumerate(df):
-        plot_and_out(file, f"{index}_{i}", f"{i}_{file_name}", x)
-        return # Only one plot
+def plot_env(env, i):
+    filename = f'../plots/env_{i}.png'
+    plt.clf()
+    plt.imshow(env.environment, cmap='Greys', interpolation='nearest')
+    plt.scatter(env.agent_pos[1], env.agent_pos[0], c='r', marker=',')
+    plt.scatter(env.target_pos[1], env.target_pos[0], c='g', marker=',')
+    plt.savefig(filename)
+    return filename
 
 
-if __name__ == "__main__":
-    environments = []
+def do_aggregation(dfg):
+    return dfg.agg({'used_time': ['mean', 'std'], 'performance': ['mean', 'std']})
+
+
+def main():
     n_envs = 32
     env_size = 100
     wall_percent = 0.08
     max_time = 100_00
-    for i in range(0, n_envs):
-        env = GridTraversalDiscreteEnvironment(np.array([env_size, env_size]), wall_percent, max_time)
-        env.id = i
-        environments.append(env)
-    # for environment in environments:
-    #     environment.disp()
+
+    with mp.Pool(n_envs) as pool:
+        states = [(env_size, i, max_time, wall_percent) for i in range(0, n_envs)]
+        print("Generating", flush=True)
+        result = [*tqdm.tqdm(pool.istarmap(generate_env, states), total=len(states))]
+        env_filenames = [x[0] for x in result]
+        environments = [x[1] for x in result]
+
     print("Generated", flush=True)
     agent_types = ['random', 'dfs', 'bfs', 'dijkstra']
     with mp.Pool(n_envs) as pool:
         states = [(agent_type, env) for env in environments for agent_type in agent_types]
         print("Running", flush=True)
-        results = pool.starmap(gen_simulate_agent_env, states)
+        results = [*tqdm.tqdm(pool.istarmap(gen_simulate_agent_env, states), total=len(states))] # results = pool.starmap(gen_simulate_agent_env, states)
         df = pd.DataFrame(results)
         df = df.sort_values(by=['agent_type', 'used_time', 'performance'])
-        # print(df.to_string())
-        # print(df.drop(columns=['env']).groupby(['agent_type']).mean().to_string())
-        # print(df.drop(columns=['agent_type']).groupby(['env']).mean().to_string())
-        performance_of_agents_by_env = df.pivot_table(index=['env'], columns=['agent_type'],
-                                                      values=['performance', 'used_time'])
-        used_time_by_env = df.drop(columns=['agent_type']).groupby(['env']).agg(
-            {'used_time': ['mean', 'std'], 'performance': ['mean', 'std']})
-        agent_used_time = df.drop(columns=['env']).groupby(['agent_type']).agg(
-            {'used_time': ['mean', 'std'], 'performance': ['mean', 'std']})
-
-        plots = {
+        performance_of_agents_by_env = df.pivot_table(index=['env'], columns=['agent_type'], values=['performance', 'used_time'])
+        used_time_by_env = do_aggregation(df.drop(columns=['agent_type']).groupby(['env']))
+        agent_used_time = do_aggregation(df.drop(columns=['env']).groupby(['agent_type']))
+        info_tables = {
             'Performance of agents by environment': performance_of_agents_by_env,
             'Used time / performance by environment': used_time_by_env,
             'Used time / performance by agent': agent_used_time
         }
+        data_to_plot = {
+            ('performance', 'Higher is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
+            ('used_time', 'Lower is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
+        }
+        write_report(info_tables, data_to_plot, df, env_filenames)
 
-        deagg_plots = [
-            df.pivot_table(index=['env'], columns=['agent_type'], values=['performance']),
-            df.pivot_table(index=['env'], columns=['agent_type'], values=['used_time']),
-        ]
 
-        write_report()
+def generate_env(env_size, i, max_time, wall_percent):
+    import random
+    np.random.seed(random.randint(-10000,1000000))
+    env = GridTraversalDiscreteEnvironment(np.array([env_size, env_size]), wall_percent, max_time)
+    env.id = i
+    return plot_env(env, i), env
+
+
+if __name__ == "__main__":
+    main()
