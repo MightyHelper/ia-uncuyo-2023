@@ -2,12 +2,12 @@ import numpy as np
 from lib.discrete_agent import DiscreteAgent
 from grid_traversal_env import GridTraversalDiscreteEnvironment
 
-class DFSDiscreteAgent(DiscreteAgent):
+class LDFSDiscreteAgent(DiscreteAgent):
     def __init__(self, env: GridTraversalDiscreteEnvironment, coefficient: float = 1.0):
         self.env = env
+        self.max_depth = int((env.agent_pos[0] + env.agent_pos[1] + env.target_pos[0] + env.target_pos[1]) * coefficient) # Manhatan distance * coefficient
         self.operations = self.compute_operations_stack(self.env.environment, self.env.agent_pos, self.env.target_pos)
         super().__init__(env)
-        self.max_depth = int((env.agent_pos[0] + env.agent_pos[1] + env.target_pos[0] + env.target_pos[1]) * coefficient)
 
     def get_action(self, observation: tuple) -> int:
         if len(self.operations) > 0:
@@ -32,6 +32,6 @@ class DFSDiscreteAgent(DiscreteAgent):
             for action in range(1, len(self.env.actions)):
                 direction = self.env.action_to_direction(action)
                 new_pos = cagent_pos + direction
-                if self.env.is_valid_pos(new_pos) and not visited[tuple(new_pos)]:
+                if self.env.is_valid_pos(new_pos) and not visited[tuple(new_pos)] and len(path) + 1 < self.max_depth:
                     stack.append((new_pos, [*path, action]))
         return []
