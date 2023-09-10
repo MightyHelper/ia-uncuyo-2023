@@ -89,12 +89,12 @@ def plot_csv(df, f, csv_out):
     with open(csv_out, 'w') as f2:
         # Rename the index to 'run_n'
         df.index.name = 'run_n'
-        df = df.rename(columns={'agent_type': 'algorithm_name', 'env': 'estate_n'})
+        df = df.rename(columns={'agent_type': 'algorithm_name', 'env': 'env_n', 'explored': 'estates_n'})
         df['solution_found'] = df['performance'] == 1.0
         df = df.drop(columns=['performance', 'used_time'])
-        df = df.sort_values(by=['algorithm_name', 'estate_n'])
+        df = df.sort_values(by=['algorithm_name', 'env_n'])
         df = df.reset_index()
-        df = df[['algorithm_name', 'run_n', 'estate_n', 'solution_found']]
+        df = df[['algorithm_name', 'env_n', 'estates_n', 'solution_found']]
         # Sort by algorithm name, then by estate_n
         f2.write(df.to_csv())
 

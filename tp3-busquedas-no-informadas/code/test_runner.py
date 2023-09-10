@@ -46,6 +46,8 @@ def gen_agent(env: GridTraversalDiscreteEnvironment, agent_type: str) -> Discret
 def gen_simulate_agent_env(agent_type: str, env: GridTraversalDiscreteEnvironment):
     agent = gen_agent(env, agent_type)
     performance, metadata = simulate_agent_env(agent, env)
+    if agent_type == 'random':
+        metadata['explored'] = metadata['used_time']
     metadata = {**metadata, 'agent_type': agent_type, 'performance': performance, 'env': env.id}
     return metadata
 
@@ -53,6 +55,7 @@ def gen_simulate_agent_env(agent_type: str, env: GridTraversalDiscreteEnvironmen
 def analyse_results(env_filenames, results, report, agent_types, csv_out, tpn):
     print("Generating Reports", flush=True)
     df = pd.DataFrame(results)
+    print(df.to_string())
     df = df.sort_values(by=['agent_type', 'used_time', 'performance'])
     performance_of_agents_by_env = df.pivot_table(index=['env'], columns=['agent_type'],
                                                   values=['performance', 'used_time'])
@@ -64,13 +67,12 @@ def analyse_results(env_filenames, results, report, agent_types, csv_out, tpn):
         'Used time / performance by agent': agent_used_time
     }
     data_to_plot = {
-        ('Performance', 'performance', 'Higher is better'): df.groupby(['env', 'agent_type']).mean().unstack(
-            ['agent_type']),
+        ('Performance', 'performance', 'Higher is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
         ('Used time', 'used_time', 'Lower is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
-        ('Overall Performance', 'performance', 'Higher is better'): df.groupby(['agent_type']).mean().unstack(
-            ['agent_type']),
-        ('Overall Used time', 'used_time', 'Lower is better'): df.groupby(['agent_type']).mean().unstack(
-            ['agent_type']),
+        ('Explored', 'explored', 'Lower is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
+        ('Overall Performance', 'performance', 'Higher is better'): df.groupby(['agent_type']).mean().unstack(['agent_type']),
+        ('Overall Used time', 'used_time', 'Lower is better'): df.groupby(['agent_type']).mean().unstack(['agent_type']),
+        ('Overall Explored', 'explored', 'Lower is better'): df.groupby(['agent_type']).mean().unstack(['agent_type']),
     }
     write_report(info_tables, data_to_plot, df, env_filenames, report, agent_types, csv_out, tpn)
 
@@ -116,7 +118,7 @@ def write_report(info_tables, data_to_plot, df, env_filenames, report, agent_typ
         f.write("## Raw Data\n")
         plot_csv(df, f, csv_out)
         if tpn != 3:
-            return # Only for tp3
+            return  # Only for tp3
         f.write("# TP3 Report (C)\n")
         # Cuál de los 3 algoritmos considera más adecuado para resolver el problema planteado en A)?. Justificar la respuesta.
         f.write("## Which algorithm is more suitable for the problem?\n")
@@ -132,14 +134,13 @@ def write_report(info_tables, data_to_plot, df, env_filenames, report, agent_typ
         f.write("\n")
 
 
-def main(report, csv_out, agent_types, tpn, n_envs = 30, env_size = 100, wall_percent = 0.08, max_time = 10_000):
+def main(report, csv_out, agent_types, tpn, n_envs=30, env_size=100, wall_percent=0.08, max_time=10_000):
     plt.tight_layout()
     env_filenames, environments = generate_environments(env_size, max_time, n_envs, wall_percent)
     results = test_agents(environments, n_envs, agent_types)
     analyse_results(env_filenames, results, report, agent_types, csv_out, tpn)
 
 
-
-
 if __name__ == "__main__":
-    main('../tp3-reporte.md', '../no-informada-results.csv', ['random', 'dfs', 'bfs', 'dijkstra', 'ldfs-00.5', 'ldfs-01.0', 'ldfs-02.0', 'ldfs-04.0', 'ldfs-16.0'], 3)
+    main('../tp3-reporte.md', '../no-informada-results.csv',
+         ['random', 'dfs', 'bfs', 'dijkstra', 'ldfs-00.5', 'ldfs-01.0', 'ldfs-02.0', 'ldfs-04.0', 'ldfs-16.0'], 3)

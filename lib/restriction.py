@@ -20,6 +20,23 @@ class Restriction(ABC):
         pass
 
 
+class DummyRestriction(Restriction):
+    def __init__(self, output):
+        self.output = output
+
+    def is_ok(self, state: tuple) -> bool:
+        return True
+
+    def process_action(self, action: int):
+        pass
+
+    def print(self):
+        print(f"DummyRestriction")
+
+    def get_stats(self) -> dict[str, Any]:
+        return self.output
+
+
 class TimeRestriction(Restriction):
 
     def __init__(self, max_time: int):

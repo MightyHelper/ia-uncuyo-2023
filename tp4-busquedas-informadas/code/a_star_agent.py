@@ -5,18 +5,24 @@ import numpy as np
 from queue import PriorityQueue
 from lib.discrete_agent import DiscreteAgent
 from grid_traversal_env import GridTraversalDiscreteEnvironment
+from restriction import DummyRestriction
+
 
 ## https://docs.python.org/3/library/queue.html
 @dataclass(order=True)
 class PrioritizedItem:
     priority: int
-    item: Any=field(compare=False)
+    item: Any = field(compare=False)
+
 
 class AStarDiscreteAgent(DiscreteAgent):
     def __init__(self, env: GridTraversalDiscreteEnvironment):
         self.env = env
+        self.explore_count = 0
         self.operations = self.compute_operations_queue(self.env.environment, self.env.agent_pos, self.env.target_pos)
         super().__init__(env)
+        env.add_restriction(DummyRestriction({'explored': self.explore_count}))
+
 
     def get_action(self, observation: tuple) -> int:
         if len(self.operations) > 0:
@@ -38,6 +44,7 @@ class AStarDiscreteAgent(DiscreteAgent):
         queue.put(PrioritizedItem(0, (agent_pos, [])))
         while not queue.empty():
             cagent_pos, path = queue.get().item
+            self.explore_count += 1
             if visited[tuple(cagent_pos)]:
                 continue
             if self.is_same(cagent_pos, target_pos):

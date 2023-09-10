@@ -1,14 +1,16 @@
 import numpy as np
 from lib.discrete_agent import DiscreteAgent
 from grid_traversal_env import GridTraversalDiscreteEnvironment
+from restriction import DummyRestriction
+
 
 class DFSDiscreteAgent(DiscreteAgent):
     def __init__(self, env: GridTraversalDiscreteEnvironment):
         self.env = env
+        self.explore_count = 0
         self.operations = self.compute_operations_stack(self.env.environment, self.env.agent_pos, self.env.target_pos)
         super().__init__(env)
-        # self.env.print()
-        # print(f"{[self.env.action_to_direction(x) for x in self.operations]=}")
+        env.add_restriction(DummyRestriction({'explored': self.explore_count}))
 
     def get_action(self, observation: tuple) -> int:
         if len(self.operations) > 0:
@@ -46,6 +48,7 @@ class DFSDiscreteAgent(DiscreteAgent):
         stack = [(agent_pos, [])]
         while len(stack) > 0:
             cagent_pos, path = stack.pop()
+            self.explore_count += 1
             # print("CP", cagent_pos, path, cagent_pos == target_pos, np.all(cagent_pos == target_pos))
             if visited[tuple(cagent_pos)]:
                 continue
