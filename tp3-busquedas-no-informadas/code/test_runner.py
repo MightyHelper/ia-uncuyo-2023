@@ -54,8 +54,9 @@ def gen_simulate_agent_env(agent_type: str, env: GridTraversalDiscreteEnvironmen
 
 def analyse_results(env_filenames, results, report, agent_types, csv_out, tpn):
     print("Generating Reports", flush=True)
+    for result in results:
+        result['path'] = " ".join([str(x) for x in result['path']]) if 'path' in result else ""
     df = pd.DataFrame(results)
-    print(df.to_string())
     df = df.sort_values(by=['agent_type', 'used_time', 'performance'])
     performance_of_agents_by_env = df.pivot_table(index=['env'], columns=['agent_type'],
                                                   values=['performance', 'used_time'])
@@ -66,15 +67,21 @@ def analyse_results(env_filenames, results, report, agent_types, csv_out, tpn):
         'Used time / performance by environment': used_time_by_env,
         'Used time / performance by agent': agent_used_time
     }
+    path = df['path']
+    df = df.drop(columns=['path'])
+    # print(df.to_string())
     data_to_plot = {
-        ('Performance', 'performance', 'Higher is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
+        ('Performance', 'performance', 'Higher is better'): df.groupby(['env', 'agent_type']).mean().unstack(
+            ['agent_type']),
         ('Used time', 'used_time', 'Lower is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
         ('Explored', 'explored', 'Lower is better'): df.groupby(['env', 'agent_type']).mean().unstack(['agent_type']),
-        ('Overall Performance', 'performance', 'Higher is better'): df.groupby(['agent_type']).mean().unstack(['agent_type']),
-        ('Overall Used time', 'used_time', 'Lower is better'): df.groupby(['agent_type']).mean().unstack(['agent_type']),
+        ('Overall Performance', 'performance', 'Higher is better'): df.groupby(['agent_type']).mean().unstack(
+            ['agent_type']),
+        ('Overall Used time', 'used_time', 'Lower is better'): df.groupby(['agent_type']).mean().unstack(
+            ['agent_type']),
         ('Overall Explored', 'explored', 'Lower is better'): df.groupby(['agent_type']).mean().unstack(['agent_type']),
     }
-    write_report(info_tables, data_to_plot, df, env_filenames, report, agent_types, csv_out, tpn)
+    write_report(info_tables, data_to_plot, df, env_filenames, report, agent_types, csv_out, tpn, path)
 
 
 def test_agents(environments, n_envs, agent_types):
@@ -104,7 +111,42 @@ def generate_env(env_size, i, max_time, wall_percent):
     return plot_env(env, i), env
 
 
-def write_report(info_tables, data_to_plot, df, env_filenames, report, agent_types, csv_out, tpn):
+def compact_path(path):
+    split = path.split(" ")
+    out = []
+    # Compact a a a a a to 5xa if cout > 10
+    count = 0
+    last = None
+    for x in split:
+        if x == last:
+            count += 1
+        else:
+            if last is not None:
+                if count > 10:
+                    out.append(f"{count}x{last}")
+                else:
+                    out.extend([last] * count)
+
+            last = x
+            count = 1
+    if last is not None:
+        out.append(f"{count}x{last}")
+    return " ".join(out)
+
+
+def plot_paths(path, df, f):
+    f.write(f"Paths are defined as a sequence of actions, where each action is a number from 0 to 4, where 0 is halt, "
+            f"1: +x, 2: -x, 3: +y, 4: -y.\n")
+    for i, p in enumerate(path):
+        f.write(f"### Path {i}, {df.iloc[i]['agent_type']} env {df.iloc[i]['env']}\n")
+        f.write(f"{compact_path(p)}\n")
+        f.write(f"Used time: {df.iloc[i]['used_time']}\n")
+        f.write(f"Performance: {df.iloc[i]['performance']}\n")
+        f.write(f"Explored: {df.iloc[i]['explored']}\n")
+        f.write("\n")
+
+
+def write_report(info_tables, data_to_plot, df, env_filenames, report, agent_types, csv_out, tpn, path):
     with open(report, 'w') as f:
         f.write(f"# TP{tpn} Report (B)\n")
         f.write("## Data plots\n")
@@ -117,6 +159,8 @@ def write_report(info_tables, data_to_plot, df, env_filenames, report, agent_typ
         plot_pd_tables(f, info_tables)
         f.write("## Raw Data\n")
         plot_csv(df, f, csv_out)
+        f.write("## Paths\n")
+        plot_paths(path, df, f)
         if tpn != 3:
             return  # Only for tp3
         f.write("# TP3 Report (C)\n")

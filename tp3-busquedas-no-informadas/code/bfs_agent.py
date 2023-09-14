@@ -12,7 +12,6 @@ class BFSDiscreteAgent(DiscreteAgent):
         super().__init__(env)
         env.add_restriction(DummyRestriction({'explored': self.explore_count}))
 
-
     def get_action(self, observation: tuple) -> int:
         if len(self.operations) > 0:
             return self.operations.pop(0)

@@ -1,9 +1,8 @@
-import random
 from typing import Any
 
 import numpy as np
 from lib.grid_discrete_env import GridDiscreteEnvironment
-from lib.restriction import TimeRestriction
+from lib.restriction import TimeRestriction, PathTrackingRestriction
 
 
 class GridTraversalDiscreteEnvironment(GridDiscreteEnvironment):
@@ -16,6 +15,7 @@ class GridTraversalDiscreteEnvironment(GridDiscreteEnvironment):
         super().__init__(dims)
         self.target_pos = self.gen_random_pos()
         self.add_restriction(TimeRestriction(max_time))
+        self.add_restriction(PathTrackingRestriction())
         self.initial_distance = np.linalg.norm(self.target_pos - self.agent_pos)
 
     def init_random_env(self):

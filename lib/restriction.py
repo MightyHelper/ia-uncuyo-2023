@@ -60,3 +60,24 @@ class TimeRestriction(Restriction):
 
     def __str__(self):
         return f"TimeRestriction({self.remaining_time}/{self.max_time})"
+
+
+class PathTrackingRestriction(Restriction):
+
+    def __init__(self):
+        self.path = []
+
+    def is_ok(self, state: tuple) -> bool:
+        return True
+
+    def process_action(self, action: int):
+        self.path.append(action)
+
+    def print(self):
+        print("Path: ", self.path)
+
+    def get_stats(self) -> dict[str, Any]:
+        return {'path': self.path}
+
+    def __str__(self):
+        return f"PathTrackingRestriction({self.path})"

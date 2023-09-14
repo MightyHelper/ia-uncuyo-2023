@@ -8,6 +8,8 @@
       <sourceFolder url="file://$MODULE_DIR$/tp3-busquedas-no-informadas/code" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tp4-busquedas-informadas/code" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/tp5-busquedas-locales/code" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/tp3-busquedas-no-informadas/plots" />
+      <excludeFolder url="file://$MODULE_DIR$/tp4-busquedas-informadas/plots" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
