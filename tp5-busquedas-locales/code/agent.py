@@ -199,18 +199,20 @@ class GeneticAlgorithmAgent(BaseLocalSearchAgent):
 
     @staticmethod
     @jit(nopython=True, fastmath=True)
-    def crossover(parent1, parent2):
+    def crossover(parent1, parent2) -> list[int]:
         return [parent1[i] if np.random.random() < 0.5 else parent2[i] for i in range(len(parent1))]
 
     @staticmethod
     @jit(nopython=True, fastmath=True)
-    def mutate(child, env_size_x):
-        child[np.random.randint(0, len(child))] = np.random.randint(0, env_size_x)
+    def mutate(child: list[int], env_size_x) -> list[int]:
+        idx = int(np.random.randint(0, len(child)))
+        value = int(np.random.randint(0, len(child)))
+        child[idx] = value
         return child
 
     @staticmethod
     @jit(nopython=True, fastmath=True)
-    def mutate2(child, env_size_x):
+    def mutate2(child, env_size_x) -> list[int]:
         """Swap two random elements"""
         i1 = np.random.randint(0, len(child))
         i2 = np.random.randint(0, len(child))
@@ -219,7 +221,7 @@ class GeneticAlgorithmAgent(BaseLocalSearchAgent):
 
     @staticmethod
     @jit(nopython=True, fastmath=True)
-    def crossover2(parent1, parent2):
+    def crossover2(parent1, parent2) -> list[int]:
         """Good for permutations"""
         i1 = np.random.randint(0, len(parent1))
         i2 = np.random.randint(0, len(parent1))
@@ -233,9 +235,9 @@ class GeneticAlgorithmAgent(BaseLocalSearchAgent):
 
     @staticmethod
     @jit(nopython=True, fastmath=True)
-    def crossover3(parent1, parent2):
+    def crossover3(parent1: list[int], parent2: list[int]) -> list[int]:
         i1 = np.random.randint(0, len(parent1))
-        i2 = np.random.randint(0, len(parent1))
+        i2 = np.random.randint(0, len(parent2))
         if i1 > i2:
             i1, i2 = i2, i1
         child1 = parent1[i1:i2]
@@ -245,4 +247,24 @@ class GeneticAlgorithmAgent(BaseLocalSearchAgent):
                 child1.append(parent2[i])
             if parent1[i] not in child2:
                 child2.append(parent1[i])
-        return child1, child2
+        print(child1)
+        return child1 , child2
+
+    def set_mut(self, param):
+        self.mutation_function = {
+            0: GeneticAlgorithmAgent.mutate,
+            1: GeneticAlgorithmAgent.mutate2,
+        }[param]
+
+    def set_cross(self, param):
+        self.crossover_function = {
+            0: GeneticAlgorithmAgent.crossover,
+            1: GeneticAlgorithmAgent.crossover2,
+            2: GeneticAlgorithmAgent.crossover3,
+        }[param]
+
+    def set_pop(self, param):
+        self.populate_function = {
+            0: GeneticAlgorithmAgent.generate_population,
+            1: GeneticAlgorithmAgent.generate_permutation_population,
+        }[param]

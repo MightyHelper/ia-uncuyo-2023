@@ -1,0 +1,24 @@
+# TP5 Report - Local Search
+
+## Agent 1: Hill climbing
+
+The hill climbing agent is implemented with a look ahead of 1.
+It will look at all the possible moves and choose the one that maximizes the score.
+If there are multiple moves that maximize the score, it will choose one at random.
+
+## Agent 2: Simulated Annealing
+There are 2 variables to the simulated annealing agent: the temperature and the linear decay coefficient.
+
+The temperature is initialized to 100 and is multiplied by the linear decay coefficient after each move.
+
+3 different linear decay coefficients were tested: 0.9, 0.99 and 0.999.
+
+## Agent 3: Genetic Algorithm
+The genetic algorithm agent is implemented with:
+```
+population size: 1000
+mutation rate: [0.1, 0.5]
+crossover rate: 1.0
+```
+
+The population is
