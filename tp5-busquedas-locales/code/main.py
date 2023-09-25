@@ -1,6 +1,7 @@
 import multiprocessing
 import random
 import tqdm
+import time
 
 from agent import HillClimbingAgent, SimulatedAnnealingAgent, GeneticAlgorithmAgent, BaseLocalSearchAgent
 from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning, NumbaWarning
@@ -38,16 +39,16 @@ def test_agent(name: tuple[str, dict[str, float]], size: int):
     env = gen_env(size)
     agent = gen_agent(name)
     np.random.seed(random.randint(0, 100000))
-    start_nanos = np.datetime64('now')
+    start_seconds = time.time()
     result, score, visited = agent.solve(env, 1)
-    end_nanos = np.datetime64('now')
+    end_seconds = time.time()
     metadata = {
         'agent': name[0],
         'agent_params': name[1],
         'size': size,
         'score': score,
         'visited': visited,
-        'nanos': (end_nanos - start_nanos).astype(int),
+        'seconds': end_seconds - start_seconds,
         'result': result,
     }
     return metadata
@@ -90,6 +91,7 @@ def do_starmap(params: dict[str, list[float]]) -> list[dict[str, float]]:
 
 
 def main():
+    start_time = time.time()
     simulations_to_run: list[tuple[str, dict[str, list[float]]]] = [
         ('hill_climbing', {}),
         ('simulated_annealing', {'t': [50, 100], 'd': [0.999, 0.99, 0.9, 0.5, 0.1]}),
@@ -111,17 +113,19 @@ def main():
             # Starmap
             simulations += [(name, x) for x in do_starmap(params)]
     print("\n".join([str(x) for x in simulations]))
-    m = 128
-    sizes = [4, 8, 10, 12, 15, 16, 32, 64, m]
+    n_iter = 128
+    sizes = [4, 8, 10, 12, 15, 16, 32, 64, 128]
     results = test_agent_v_envs(
         simulations,
         sizes,
-        m
+        n_iter
     )
     df = pandas.DataFrame(results)
     # print(results)
     # print(df.to_string())
     df.to_pickle('results2.pkl')
+    end_time = time.time()
+    print(f"Total time: {end_time - start_time}")
 
 
 def mini_map(h_map):
