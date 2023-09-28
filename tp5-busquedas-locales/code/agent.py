@@ -5,17 +5,29 @@ from numba import jit
 from numba.typed import List
 import tqdm, multiprocessing
 
-from eight_queens_discrete_env import EightQueensEnvironment
+from eight_queens_discrete_env import EightQueensEnvironment, do_score_config
 
 
 class BaseLocalSearchAgent(ABC):
     total_visited = 0
+    def __init__(self):
+        self.total_visited = 0
+        self.h_values = []
     @abstractmethod
-    def solve(self, env: EightQueensEnvironment, lookahead: int = 1) -> tuple[list, int, int]:
+    def solve(self, env: EightQueensEnvironment, lookahead: int = 1) -> tuple[list[int], int, int, list[int]]:
         pass
 
 
+@jit(nopython=True, fastmath=True)
+def element_sum(a, b):
+    return [a[i] + b[i] for i in range(len(a))]
+
+
+
 class RandomLocalSearchAgent(BaseLocalSearchAgent, ABC):
+    def __init__(self):
+        super().__init__()
+
     @staticmethod
     @jit(nopython=True, fastmath=True)
     def compute_directions(env_size_x, env_size_y):
@@ -32,19 +44,14 @@ class RandomLocalSearchAgent(BaseLocalSearchAgent, ABC):
     @staticmethod
     def compute_score(args):
         direction, env, config = args
-        return env.score_config(RandomLocalSearchAgent.element_sum(config, direction))
-
-    @staticmethod
-    @jit(nopython=True, fastmath=True)
-    def element_sum(a, b):
-        return [a[i] + b[i] for i in range(len(a))]
+        return env.score_config(element_sum(config, direction))
 
     @staticmethod
     def compute_n_directions(env, n):
         directions = {tuple(x) for x in RandomLocalSearchAgent.compute_directions(env.size[0], env.size[1])}
         base_dir = [*directions.copy()]
         for i in range(n):
-            directions = {tuple(RandomLocalSearchAgent.element_sum(dirx, bdir)) for dirx in directions for bdir in
+            directions = {tuple(element_sum(dirx, bdir)) for dirx in directions for bdir in
                           base_dir}
         return [*directions]
 
@@ -55,14 +62,19 @@ class RandomLocalSearchAgent(BaseLocalSearchAgent, ABC):
         configuration = np.random.randint(0, env.size[0], size=env.size[1:]).tolist()
         best_config = configuration
         best_score = env.score_config(configuration)
+        self.h_values.append(best_score)
         # print(f"{best_config=}, {best_score=}")
         i = 0
         while True:
             old_best_score = best_score
             old_best_config = best_config
-            best_config, best_score = self.get_best_single_step_st(configuration, directions, env)
-            if self.should_stop(best_config, best_score, old_best_config, old_best_score, i):
-                return old_best_config, old_best_score, self.total_visited
+            new_config, new_score = self.get_best_single_step_st(configuration, directions, env)
+            if new_score < best_score:
+                best_score = new_score
+                best_config = new_config
+            if self.should_stop(new_config, new_score, old_best_config, old_best_score, i):
+                return old_best_config, old_best_score, self.total_visited, self.h_values
+            self.h_values.append(best_score)
             i += 1
 
     @abstractmethod
@@ -77,21 +89,34 @@ class RandomLocalSearchAgent(BaseLocalSearchAgent, ABC):
     def get_best_single_step_mt(self, configuration, directions, env):
         pass
 
-
 class HillClimbingAgent(RandomLocalSearchAgent):
+    def __init__(self):
+        super().__init__()
+
+
     def should_stop(self, best_config, best_score, old_best_config, old_best_score, i):
-        return best_score >= old_best_score and np.all(best_config == old_best_config) or i > 10000
+        # print(i, len(best_config))
+        return best_score == 0 or i > 10
 
     def get_best_single_step_st(self, configuration, directions, env):
         best_score = 9999999999999999
-        best_config = None
-        for k, direction in enumerate(directions):
-            new_config = RandomLocalSearchAgent.element_sum(configuration, direction)
-            new_score = env.score_config(new_config)
-            self.total_visited += 1
-            if best_score is None or new_score < best_score:
-                best_score = new_score
-                best_config = new_config
+        best_config = [0] * env.size[0]
+        self.total_visited += len(directions)
+        best_config, best_score = HillClimbingAgent.main_bit(best_config, best_score, configuration, directions)
+        if best_score is None:
+            # Restart
+            return np.random.randint(0, env.size[0], size=env.size[1:]).tolist(), 9999999999999999
+        return best_config, best_score
+
+    @staticmethod
+    @jit(nopython=True, parallel=True, fastmath=True)
+    def main_bit(best_config, best_score, configuration, directions):
+        len_conf = len(best_config)
+        scores = [do_score_config(element_sum(configuration, direction), len_conf) for k, direction in enumerate(directions)]
+        for i in range(len(directions)):
+            if scores[i] < best_score:
+                best_score = scores[i]
+                best_config = element_sum(configuration, directions[i])
         return best_config, best_score
 
     def get_best_single_step_mt(self, configuration, directions, env):
@@ -104,19 +129,20 @@ class HillClimbingAgent(RandomLocalSearchAgent):
             ))
             self.total_visited += len(directions)
             best_score = min(results)
-            best_config = RandomLocalSearchAgent.element_sum(configuration, directions[np.argmin(results)])
+            best_config = element_sum(configuration, directions[np.argmin(results)])
             return best_config, best_score
 
 
 class SimulatedAnnealingAgent(RandomLocalSearchAgent):
 
     def should_stop(self, best_config, best_score, old_best_config, old_best_score, i):
-        return i > 1000 or np.all(best_config == old_best_config) or best_score == 0
+        return i > 500 or best_score == 0
 
     def get_best_single_step_mt(self, configuration, directions, env):
         return self.get_best_single_step_st(configuration, directions, env)
 
     def __init__(self, t=100, dt=0.999):
+        super().__init__()
         self.t = t
         self.dt = dt
 
@@ -126,13 +152,13 @@ class SimulatedAnnealingAgent(RandomLocalSearchAgent):
     def get_best_single_step_st(self, configuration, directions, env):
         current_score = env.score_config(configuration)
         random_direction = directions[np.random.randint(0, len(directions))]
-        new_config = RandomLocalSearchAgent.element_sum(configuration, random_direction)
+        new_config = element_sum(configuration, random_direction)
         new_score = env.score_config(new_config)
         self.total_visited += 1
         self.apply_temperature()
         if new_score < current_score:
             return new_config, new_score
-        elif np.random.random() < np.exp((current_score - new_score) / self.t):
+        elif self.t > 0 and np.random.random() < np.exp((current_score - new_score) / self.t):
             return new_config, new_score
         else:
             return configuration, current_score
@@ -140,6 +166,7 @@ class SimulatedAnnealingAgent(RandomLocalSearchAgent):
 
 class GeneticAlgorithmAgent(BaseLocalSearchAgent):
     def __init__(self, population_size=100, generations=100, mutation_rate=0.1):
+        super().__init__()
         self.population_size = population_size
         self.generations = generations
         self.mutation_rate = mutation_rate
@@ -154,9 +181,10 @@ class GeneticAlgorithmAgent(BaseLocalSearchAgent):
         for i in range(self.generations):
             # print("Generation " + str(i) + " best score: " + str(best_score))
             population, best_agent, best_score = self.evolve_population(population, env, best_agent, best_score)
+            self.h_values.append(best_score)
             if best_score == 0:
-                return best_agent, best_score, self.total_visited
-        return best_agent, best_score, self.total_visited
+                return best_agent, best_score, self.total_visited, self.h_values
+        return best_agent, best_score, self.total_visited, self.h_values
 
     @staticmethod
     def generate_population(population_size, env: EightQueensEnvironment):
@@ -247,7 +275,7 @@ class GeneticAlgorithmAgent(BaseLocalSearchAgent):
                 child1.append(parent2[i])
             if parent1[i] not in child2:
                 child2.append(parent1[i])
-        print(child1)
+        # print(child1)
         return child1 , child2
 
     def set_mut(self, param):

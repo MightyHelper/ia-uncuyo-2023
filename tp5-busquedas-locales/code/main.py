@@ -38,9 +38,10 @@ def gen_agent(agent: tuple[str, dict[str, float]]) -> BaseLocalSearchAgent:
 def test_agent(name: tuple[str, dict[str, float]], size: int):
     env = gen_env(size)
     agent = gen_agent(name)
+    # print(agent.h_values)
     np.random.seed(random.randint(0, 100000))
     start_seconds = time.time()
-    result, score, visited = agent.solve(env, 1)
+    result, score, visited, h_values = agent.solve(env, 1)
     end_seconds = time.time()
     metadata = {
         'agent': name[0],
@@ -49,16 +50,15 @@ def test_agent(name: tuple[str, dict[str, float]], size: int):
         'score': score,
         'visited': visited,
         'seconds': end_seconds - start_seconds,
+        'h_values': h_values,
         'result': result,
     }
     return metadata
 
 
-def test_agent_n_times(name: tuple[str, dict[str, float]], size: int, n: int, pool):
-    # with multiprocessing.Pool() as pool:
+def test_agent_n_times(name: tuple[str, dict[str, float]], size: int, n: int):
     print(f"Testing agent! {name} {size}", flush=True)
-    results = pool.starmap(test_agent, [(name, size)] * n)
-    # results = list(tqdm.tqdm(pool.imap(test_agent, [(name, size)] * n), total=n))
+    results = [test_agent(name, size) for i in range(n)]
     for i, v in enumerate(results):
         v['run'] = i
     return results
@@ -67,13 +67,13 @@ def test_agent_n_times(name: tuple[str, dict[str, float]], size: int, n: int, po
 def test_agent_v_envs(names: list[tuple[str, dict[str, float]]], sizes: list[int], n: int):
     print(f"Testing agents! {len(names) * len(sizes) * n}", flush=True)
     with multiprocessing.Pool() as pool:
-        out = [test_agent_n_times(name, size, n, pool) for size in sizes for name in names]
-        # out = pool.starmap(test_agent_n_times, [(name, size, n) for size in sizes for name in names])
-        return [item for sublist in out for item in sublist]
+        out = pool.starmap(test_agent_n_times, [(name, size, n) for size in sizes for name in names])
+        # out = [test_agent_n_times(name, size, n) for size in sizes for name in names]
+    return [item for sublist in out for item in sublist]
 
 
 def do_starmap(params: dict[str, list[float]]) -> list[dict[str, float]]:
-    """Recusively explode params"""
+    """Recursively explode params"""
     keys = list(params.keys())
     values = list(params.values())
     first_key = keys[0]
@@ -113,7 +113,7 @@ def main():
             # Starmap
             simulations += [(name, x) for x in do_starmap(params)]
     print("\n".join([str(x) for x in simulations]))
-    n_iter = 128
+    n_iter = 1
     sizes = [4, 8, 10, 12, 15, 16, 32, 64, 128]
     results = test_agent_v_envs(
         simulations,
@@ -123,20 +123,9 @@ def main():
     df = pandas.DataFrame(results)
     # print(results)
     # print(df.to_string())
-    df.to_pickle('results2.pkl')
+    df.to_pickle('results_h.pkl')
     end_time = time.time()
     print(f"Total time: {end_time - start_time}")
 
 
-def mini_map(h_map):
-    return " ".join([f"{k}:{v:.3f}" for k, v in h_map.items()])
-
-
-def solve1(df):
-    """1. El número (porcentaje) de veces que se llega a un estado de solución óptimo."""
-    # Use box plot, from 0 to 1, and save it to solved.png, key = [agent, agent_params], value = [solved]
-    df.plot(by=['agent', 'agent_params'], column=['solved'], ylim=[0, 1], grid=True).get_figure().savefig(
-        'solved.png')
-
-
-# main()
+main()

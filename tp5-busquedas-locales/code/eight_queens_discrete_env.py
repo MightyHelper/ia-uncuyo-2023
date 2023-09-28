@@ -12,6 +12,17 @@ def is_attacking(ax, ay, bx, by) -> bool:
     dy = ay - by
     return dx == 0 or dy == 0 or dx == dy or dx == -dy
 
+@jit(nopython=True, fastmath=True)
+def do_score_config(config: list, size: int) -> int:
+    for x in config:
+        if x < 0 or x >= size:
+            return 9999999999
+    count = 0
+    for i in range(len(config)):
+        for j in range(i + 1, len(config)):
+            if is_attacking(i, config[i], j, config[j]):
+                count += 1
+    return count
 
 class EightQueensEnvironment:
     def __init__(self, size):
