@@ -18,7 +18,8 @@ def map_float_stirng(x):
 def process_results():
 
 
-    df = pd.read_pickle('results2.pkl')
+    df = pd.read_pickle('results_h.pkl')
+    df.drop(columns=['h_values'], inplace=True)
     agent_param_list = ['t', 'd','p_size','pop_F','cross_F','mut_F','mut','gen' ]
     unmarshaled_columns = df['agent_params'].apply(lambda x: pd.Series(x))
     df = pd.concat([df, unmarshaled_columns], axis=1)

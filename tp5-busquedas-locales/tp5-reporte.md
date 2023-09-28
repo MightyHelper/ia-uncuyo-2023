@@ -2,17 +2,17 @@
 ## A - Ejecuciones
 ### 1. Porcentaje de veces que se llega a un estado optimo
 
-![Porcentaje de veces que se llega a un estado optimo](./code/score.png){ width=100% }
+![Porcentaje de veces que se llega a un estado optimo](./code/score.png)
 
 ### 2. Tiempo de ejecucion
 
-![Tiempo de ejecucion](./code/exec_time_log.png){ width=100% }
+![Tiempo de ejecucion](./code/exec_time_log.png)
 
-![Tiempo de ejecucion](./code/exec_time.png){ width=100% }
+![Tiempo de ejecucion](./code/exec_time.png)
 
 ### 3. Cantidad de estados visitados
 
-![Cantidad de estados visitados](./code/visited.png){ width=100% }
+![Cantidad de estados visitados](./code/visited.png)
 
 ### 4. Csv
 
