@@ -35,7 +35,7 @@ def process_results():
     df['gen'] = df['gen'].map(map_float_stirng)
     df['p_size'] = df['p_size'].map(map_float_stirng)
 
-    score_plot = df.groupby(['agent', *agent_param_list], dropna=False, sort=True, group_keys=False).agg({'solved': 'mean'}).plot(kind="barh", title="Solved % (Higher is better)", figsize=(20,20))
+    score_plot = df.groupby(['agent', *agent_param_list], dropna=False, sort=True, group_keys=False).agg({'solved': 'mean'}).plot(kind="barh", title="Solved % (Higher is better)", figsize=(20,20), xlim=(0,1))
     # Stop ticks rendered outside of the plot
     score_plot.get_figure().savefig('score.png', bbox_inches='tight', pad_inches=0)
     visited_plot = df.plot(kind="box", by=['agent', *agent_param_list], column=['visited'], logy=True, title="Visited states (Lower is better)", rot=90, figsize=(20,10))[0]
