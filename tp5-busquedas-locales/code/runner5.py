@@ -3,7 +3,8 @@ import random
 import tqdm
 import time
 
-from agent import HillClimbingAgent, SimulatedAnnealingAgent, GeneticAlgorithmAgent, BaseLocalSearchAgent
+from agents5 import HillClimbingAgent, SimulatedAnnealingAgent, GeneticAlgorithmAgent, EightQueensBaseAgent
+from agents6 import BacktrackingAgent, ForwardCheckingAgent
 from numba.core.errors import NumbaDeprecationWarning, NumbaPendingDeprecationWarning, NumbaWarning
 from eight_queens_discrete_env import EightQueensEnvironment
 import numpy as np
@@ -20,7 +21,7 @@ def gen_env(size: int) -> EightQueensEnvironment:
     return EightQueensEnvironment(np.array([size, size]))
 
 
-def gen_agent(agent: tuple[str, dict[str, float]]) -> BaseLocalSearchAgent:
+def gen_agent(agent: tuple[str, dict[str, float]]) -> EightQueensBaseAgent:
     name, params = agent
     if name == 'hill_climbing':
         return HillClimbingAgent()
@@ -32,6 +33,10 @@ def gen_agent(agent: tuple[str, dict[str, float]]) -> BaseLocalSearchAgent:
         ga.set_cross(params['cross_F'])
         ga.set_pop(params['pop_F'])
         return ga
+    elif name == 'backtracking':
+        return BacktrackingAgent()
+    elif name == 'forward_checking':
+        return ForwardCheckingAgent()
     raise Exception(f"Unknown agent type: {name}")
 
 
@@ -90,9 +95,28 @@ def do_starmap(params: dict[str, list[float]]) -> list[dict[str, float]]:
     return out
 
 
-def main():
+def main(
+        simulations_to_run: list[tuple[str, dict[str, list[float]]]], sizes: list[int],
+        n_iter: int = 1,
+        out_file: str = 'results_h.pkl'
+):
     start_time = time.time()
-    simulations_to_run: list[tuple[str, dict[str, list[float]]]] = [
+    simulations = []
+    for name, params in simulations_to_run:
+        if len(params) == 0:
+            simulations.append((name, {}))
+        else:
+            # Starmap
+            simulations += [(name, x) for x in do_starmap(params)]
+    print("\n".join([str(x) for x in simulations]))
+    results = test_agent_v_envs(simulations, sizes, n_iter)
+    df = pandas.DataFrame(results)
+    df.to_pickle(out_file)
+    end_time = time.time()
+    print(f"Total time: {end_time - start_time}")
+
+if __name__ == '__main__':
+    main([
         ('hill_climbing', {}),
         ('simulated_annealing', {'t': [50, 100], 'd': [0.999, 0.99, 0.9, 0.5, 0.1]}),
         ('genetic_algorithm', {
@@ -103,29 +127,4 @@ def main():
             'cross_F': [0, 1],
             'pop_F': [0, 1]
         }),
-    ]
-    # explode params
-    simulations = []
-    for name, params in simulations_to_run:
-        if len(params) == 0:
-            simulations.append((name, {}))
-        else:
-            # Starmap
-            simulations += [(name, x) for x in do_starmap(params)]
-    print("\n".join([str(x) for x in simulations]))
-    n_iter = 1
-    sizes = [4, 8, 10, 12, 15, 16, 32, 64, 128]
-    results = test_agent_v_envs(
-        simulations,
-        sizes,
-        n_iter
-    )
-    df = pandas.DataFrame(results)
-    # print(results)
-    # print(df.to_string())
-    df.to_pickle('results_h.pkl')
-    end_time = time.time()
-    print(f"Total time: {end_time - start_time}")
-
-
-main()
+    ], [4, 8, 10, 12, 15, 16, 32, 64, 128], 100, 'results_h.pkl')

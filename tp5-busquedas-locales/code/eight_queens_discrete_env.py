@@ -1,7 +1,7 @@
 from typing import Any
 
 import numpy as np
-from numba import jit
+from numba import jit, njit
 from lib.discrete_env import DiscreteEnvironment
 
 
@@ -11,6 +11,7 @@ def is_attacking(ax, ay, bx, by) -> bool:
     dx = ax - bx
     dy = ay - by
     return dx == 0 or dy == 0 or dx == dy or dx == -dy
+
 
 @jit(nopython=True, fastmath=True)
 def do_score_config(config: list, size: int) -> int:
@@ -23,6 +24,20 @@ def do_score_config(config: list, size: int) -> int:
             if is_attacking(i, config[i], j, config[j]):
                 count += 1
     return count
+
+
+@jit(nopython=True, fastmath=True)
+def do_partial_score_config(config: list, size: int, up_to: int) -> int:
+    for x in config:
+        if x < 0 or x >= size:
+            return 9999999999
+    count = 0
+    for i in range(up_to):
+        for j in range(i + 1, up_to):
+            if is_attacking(i, config[i], j, config[j]):
+                count += 1
+    return count
+
 
 class EightQueensEnvironment:
     def __init__(self, size):
@@ -55,28 +70,47 @@ class EightQueensEnvironment:
                 for k in range(sim_size):
                     for l in range(sim_size):
                         mat[k][l] = is_attacking(i, j, k, l)
-                # if do_print:
-                #     for k in range(sim_size):
-                #         for l in range(sim_size):
-                #             if k == i and l == j:
-                #                 print("\033[1;33;40mX \033[0m", end="")
-                #                 continue
-                #             if mat[k][l] == 1:
-                #                 print("\033[1;31;40mX \033[0m", end="")
-                #             else:
-                #                 print("\033[1;32;40mX \033[0m", end="")
-                #         print()
-                #     print()
+                if do_print:
+                    for k in range(sim_size):
+                        for l in range(sim_size):
+                            if k == i and l == j:
+                                print("\033[1;33;40mX \033[0m", end="")
+                                continue
+                            if mat[k][l] == 1:
+                                print("\033[1;31;40mX \033[0m", end="")
+                            else:
+                                print("\033[1;32;40mX \033[0m", end="")
+                        print()
+                    print()
 
     @staticmethod
     @jit(nopython=True, fastmath=True)
-    def do_score_config(config: list, size: int) -> int:
-        for x in config:
-            if x < 0 or x >= size:
-                return 9999999999
-        count = 0
-        for i in range(len(config)):
-            for j in range(i + 1, len(config)):
-                if is_attacking(i, config[i], j, config[j]):
-                    count += 1
-        return count
+    def do_score_config(config: list[int], size: int) -> int:
+        return do_score_config(config, size)
+
+    @staticmethod
+    @jit(nopython=True, fastmath=True)
+    def do_partial_score_config(config: list, size: int, up_to: int) -> int:
+        return do_partial_score_config(config, size, up_to)
+
+    @staticmethod
+    @njit
+    def is_correct(config: list, up_to: int) -> int:
+        for i in range(up_to):
+            for j in range(i + 1, up_to):
+                dx = i - j
+                dy = config[i] - config[j]
+                if dy == 0 or dx == dy or dx == -dy:
+                    return False
+        return True
+
+    @staticmethod
+    @njit
+    def is_correct_no_clones(config: list, up_to: int) -> int:
+        for i in range(up_to):
+            for j in range(i + 1, up_to):
+                dx = i - j
+                dy = config[i] - config[j]
+                if dx == dy or dx == -dy:
+                    return False
+        return True

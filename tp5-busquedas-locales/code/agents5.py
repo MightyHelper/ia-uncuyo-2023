@@ -8,11 +8,13 @@ import tqdm, multiprocessing
 from eight_queens_discrete_env import EightQueensEnvironment, do_score_config
 
 
-class BaseLocalSearchAgent(ABC):
+class EightQueensBaseAgent(ABC):
     total_visited = 0
+
     def __init__(self):
         self.total_visited = 0
         self.h_values = []
+
     @abstractmethod
     def solve(self, env: EightQueensEnvironment, lookahead: int = 1) -> tuple[list[int], int, int, list[int]]:
         pass
@@ -23,8 +25,7 @@ def element_sum(a, b):
     return [a[i] + b[i] for i in range(len(a))]
 
 
-
-class RandomLocalSearchAgent(BaseLocalSearchAgent, ABC):
+class RandomLocalSearchAgent(EightQueensBaseAgent, ABC):
     def __init__(self):
         super().__init__()
 
@@ -89,10 +90,10 @@ class RandomLocalSearchAgent(BaseLocalSearchAgent, ABC):
     def get_best_single_step_mt(self, configuration, directions, env):
         pass
 
+
 class HillClimbingAgent(RandomLocalSearchAgent):
     def __init__(self):
         super().__init__()
-
 
     def should_stop(self, best_config, best_score, old_best_config, old_best_score, i):
         # print(i, len(best_config))
@@ -112,7 +113,8 @@ class HillClimbingAgent(RandomLocalSearchAgent):
     @jit(nopython=True, parallel=True, fastmath=True)
     def main_bit(best_config, best_score, configuration, directions):
         len_conf = len(best_config)
-        scores = [do_score_config(element_sum(configuration, direction), len_conf) for k, direction in enumerate(directions)]
+        scores = [do_score_config(element_sum(configuration, direction), len_conf) for k, direction in
+                  enumerate(directions)]
         for i in range(len(directions)):
             if scores[i] < best_score:
                 best_score = scores[i]
@@ -164,7 +166,7 @@ class SimulatedAnnealingAgent(RandomLocalSearchAgent):
             return configuration, current_score
 
 
-class GeneticAlgorithmAgent(BaseLocalSearchAgent):
+class GeneticAlgorithmAgent(EightQueensBaseAgent):
     def __init__(self, population_size=100, generations=100, mutation_rate=0.1):
         super().__init__()
         self.population_size = population_size
@@ -276,7 +278,7 @@ class GeneticAlgorithmAgent(BaseLocalSearchAgent):
             if parent1[i] not in child2:
                 child2.append(parent1[i])
         # print(child1)
-        return child1 , child2
+        return child1, child2
 
     def set_mut(self, param):
         self.mutation_function = {

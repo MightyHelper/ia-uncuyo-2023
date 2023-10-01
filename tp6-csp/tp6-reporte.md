@@ -19,33 +19,211 @@ Los numeros que ya se conocen no se pueden cambiar.
 
 ## 2. AC3
 
-WA -> NT, SA
-NT -> WA, Q, SA
-SA -> WA, NT, Q, NSW, V
-Q -> NT, SA, NSW
-NSW -> Q, SA, V
-V -> SA, NSW
-T
-
-WA = red
-V = blue
-
 ```mermaid
 graph LR
+    subgraph WA
+        WA_R(R)
+        WA_G(G)
+        WA_B(B)
+    end
+    subgraph NT
+        NT_R(R)
+        NT_G(G)
+        NT_B(B)
+    end
+    subgraph Q
+        Q_R(R)
+        Q_G(G)
+        Q_B(B)
+    end
+    subgraph NSW
+        NSW_R(R)
+        NSW_G(G)
+        NSW_B(B)
+    end
+    subgraph V
+        V_R(R)
+        V_G(G)
+        V_B(B)
+    end
+    subgraph SA
+        SA_R(R)
+        SA_G(G)
+        SA_B(B)
+    end
+    subgraph T
+        T_R(R)
+        T_G(G)
+        T_B(B)
+    end
     SA <--> WA & NT & Q & NSW & V
     NT <--> WA & Q
     NSW <--> Q & V
-    T
-    style WA stroke: red
-    style V stroke: blue
 ```
 
-| Variable | R G B |
-|----------|-------|
-| WA       | 1 0 0 |
-| NT       | 0 1 1 |
-| Q        | 1 1 1 |
-| NSW      | 1 1 0 |
-| V        | 0 0 1 |
-| SA       | 0 1 0 |
-| T        | 1 1 1 |
+```mermaid
+graph LR
+    subgraph WA
+        WA_R(R)
+    end
+    subgraph NT
+        NT_R(R)
+        NT_G(G)
+        NT_B(B)
+    end
+    subgraph Q
+        Q_R(R)
+        Q_G(G)
+        Q_B(B)
+    end
+    subgraph NSW
+        NSW_R(R)
+        NSW_G(G)
+        NSW_B(B)
+    end
+    subgraph V
+        V_B(B)
+    end
+    subgraph SA
+        SA_R(R)
+        SA_G(G)
+        SA_B(B)
+    end
+    subgraph T
+        T_R(R)
+        T_G(G)
+        T_B(B)
+    end
+    SA <--> WA & NT & Q & NSW & V
+    NT <--> WA & Q
+    NSW <--> Q & V
+    style WA fill:#ff0000,stroke:#000,stroke-width:2px
+    style V fill:#0000ff,stroke:#000,stroke-width:2px
+```
+
+```mermaid
+graph LR
+    subgraph WA
+        WA_R(R)
+    end
+    subgraph NT
+        NT_G(G)
+        NT_B(B)
+    end
+    subgraph Q
+        Q_R(R)
+        Q_G(G)
+        Q_B(B)
+    end
+    subgraph NSW
+        NSW_R(R)
+        NSW_G(G)
+    end
+    subgraph V
+        V_B(B)
+    end
+    subgraph SA
+        SA_G(G)
+    end
+    subgraph T
+        T_R(R)
+        T_G(G)
+        T_B(B)
+    end
+    SA <--> WA & NT & Q & NSW & V
+    NT <--> WA & Q
+    NSW <--> Q & V
+    style WA fill:#ff0000,stroke:#000,stroke-width:2px
+    style V fill:#0000ff,stroke:#000,stroke-width:2px
+    style SA fill:#00ff00,stroke:#000,stroke-width:2px
+```
+
+```mermaid
+graph LR
+    subgraph WA
+        WA_R(R)
+    end
+    subgraph NT
+        NT_B(B)
+    end
+    subgraph Q
+        Q_R(R)
+        Q_B(B)
+    end
+    subgraph NSW
+        NSW_R(R)
+    end
+    subgraph V
+        V_B(B)
+    end
+    subgraph SA
+        SA_G(G)
+    end
+    subgraph T
+        T_R(R)
+        T_G(G)
+        T_B(B)
+    end
+    SA <--> WA & NT & Q & NSW & V
+    NT <--> WA & Q
+    NSW <--> Q & V
+    style WA fill:#ff0000,stroke:#000,stroke-width:2px
+    style V fill:#0000ff,stroke:#000,stroke-width:2px
+    style SA fill:#00ff00,stroke:#000,stroke-width:2px
+    style NT fill:#0000ff,stroke:#000,stroke-width:2px
+    style NSW fill:#ff0000,stroke:#000,stroke-width:2px
+```
+
+```mermaid
+graph LR
+    subgraph WA
+        WA_R(R)
+    end
+    subgraph NT
+        NT_B(B)
+    end
+    subgraph Q
+    end
+    subgraph NSW
+        NSW_R(R)
+    end
+    subgraph V
+        V_B(B)
+    end
+    subgraph SA
+        SA_G(G)
+    end
+    subgraph T
+        T_R(R)
+        T_G(G)
+        T_B(B)
+    end
+    SA <--> WA & NT & Q & NSW & V
+    NT <--> WA & Q
+    NSW <--> Q & V
+    style WA fill:#ff0000,stroke:#000,stroke-width:2px
+    style V fill:#0000ff,stroke:#000,stroke-width:2px
+    style SA fill:#00ff00,stroke:#000,stroke-width:2px
+    style NT fill:#0000ff,stroke:#000,stroke-width:2px
+    style NSW fill:#ff0000,stroke:#000,stroke-width:2px
+    style Q fill:#000000,stroke:#000,stroke-width:2px
+```
+
+# 3
+En el AC-3 comun (No en hiperarcoconsistencia) obtenemos una complejidad de O(cd^3)
+c = cantidad de restricciones
+d = cardinalidad del dominio
+En el peor caso.
+
+AIMA 3rd edition, pag 210
+# 4
+Esta optimizacion occuparia mas espacio a cambio de menos tiempo de ejcucion, ya que implicaria, para cada arco, guardar un numero de valores restantes consistentes.
+Este numero se podria ir actualizando a medida que se van eliminando valores de los dominios.
+Esto nos permitiria, en el caso de que el numero de valores restantes consistentes sea 0, no tener que agregar el arco a la cola de arcos a revisar.
+# 5
+En el caso de arboles estructurados, 2-consistencia es suficiente para garantizar la consistencia global.
+Esto se debe a que, en un arbol, no hay ciclos, por lo que no hay caminos de longitud mayor a 2.
+
+Dicho de otro modo, podemos ordenar los nodos de un arbol de manera topologica y recorrerlos de izquierda a derecha, y en cada nodo, solo necesitamos chequear que los nodos anteriores sean consistentes con el nodo actual.
+
+# 6
