@@ -1,26 +1,40 @@
 from numba import jit, config
 
 # config.DISABLE_JIT = True
-from runner5 import *
 import numpy as np
 import pandas as pd
 import eight_queens_discrete_env
 from agents6 import BacktrackingAgent, ForwardCheckingAgent
 import timeit
 
-# main([
-#     ('backtracking', {}),
-# ], [18], 1, 'backtracking-results.pkl')
 
-def main():
-    ForwardCheckingAgent().solve(eight_queens_discrete_env.EightQueensEnvironment([18, 18]), 1)
+def run_agents():
+    from runner5 import main
+    main([
+        ('backtracking', {}),
+        ('forward_checking', {}),
+    ], [4, 8, 10, 12, 15, 16, 18], 128, 'backtracking-results.pkl')
 
-def main2():
-    BacktrackingAgent().solve(eight_queens_discrete_env.EightQueensEnvironment([18, 18]), 1)
 
-print(pd.DataFrame(np.array(timeit.repeat(main, repeat=10, number=1))).agg(['mean', 'std', 'min', 'max']).T)
-# print(pd.DataFrame(np.array(timeit.repeat(main2, repeat=10, number=1))).agg(['mean', 'std', 'min', 'max']).T)
-# main()
-# eight_queens_discrete_env.EightQueensEnvironment.test_is_attacking(4, True)
-#  0  0.061142  0.000546  0.059168  0.063592
-# 0  0.272878  0.00202  0.268591  0.278962
+def process_results():
+    from process_results5 import process_results
+    process_results('backtracking-results.pkl')
+
+
+def benchmark():
+    n = 30
+    r = 1
+
+    def main():
+        ForwardCheckingAgent().solve(eight_queens_discrete_env.EightQueensEnvironment([n, n]), 1)
+
+    def main2():
+        BacktrackingAgent().solve(eight_queens_discrete_env.EightQueensEnvironment([n, n]), 1)
+    print(pd.DataFrame(np.array(timeit.repeat(main, repeat=r, number=1))).agg(['mean', 'std', 'min', 'max']).T)
+    # print(pd.DataFrame(np.array(timeit.repeat(main2, repeat=r, number=1))).agg(['mean', 'std', 'min', 'max']).T)
+
+
+if __name__ == '__main__':
+    run_agents()
+    process_results()
+    # benchmark()

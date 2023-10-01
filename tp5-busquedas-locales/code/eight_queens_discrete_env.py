@@ -105,7 +105,6 @@ class EightQueensEnvironment:
         return True
 
     @staticmethod
-    @njit
     def is_correct_no_clones(config: list, up_to: int) -> int:
         for i in range(up_to):
             for j in range(i + 1, up_to):

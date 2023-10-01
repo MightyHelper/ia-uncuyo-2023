@@ -227,3 +227,6 @@ Esto se debe a que, en un arbol, no hay ciclos, por lo que no hay caminos de lon
 Dicho de otro modo, podemos ordenar los nodos de un arbol de manera topologica y recorrerlos de izquierda a derecha, y en cada nodo, solo necesitamos chequear que los nodos anteriores sean consistentes con el nodo actual.
 
 # 6
+![Estados visitados](./code/visited.png)
+![Tiempo](./code/exec_time.png)
+![Tiempo log x env](./code/exec_time_log.png)

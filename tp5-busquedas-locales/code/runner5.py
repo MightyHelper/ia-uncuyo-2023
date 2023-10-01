@@ -66,6 +66,7 @@ def test_agent_n_times(name: tuple[str, dict[str, float]], size: int, n: int):
     results = [test_agent(name, size) for i in range(n)]
     for i, v in enumerate(results):
         v['run'] = i
+    print(f"Done testing agent! {name} {size}", flush=True)
     return results
 
 
