@@ -16,22 +16,23 @@ def map_float_stirng(x):
     return str(x)
 
 def process_results(filename):
+    plt.tight_layout()
     df = pd.read_pickle(filename)
     df.drop(columns=['h_values'], inplace=True)
-    agent_param_list = [] # ['t', 'd','p_size','pop_F','cross_F','mut_F','mut','gen' ]
+    agent_param_list = ['t', 'd','p_size','pop_F','cross_F','mut_F','mut','gen']
     unmarshaled_columns = df['agent_params'].apply(lambda x: pd.Series(x))
     df = pd.concat([df, unmarshaled_columns], axis=1)
     df = df.drop(columns=['agent_params'])
     df['solved'] = df['score'] == 0
     df['solved'] = df['solved'].astype(int)
-    # df['pop_F'] = df['pop_F'].map(map_func_ver)
-    # df['cross_F'] = df['cross_F'].map(map_func_ver)
-    # df['mut_F'] = df['mut_F'].map(map_func_ver)
-    # df['d'] = df['d'].map(map_float_stirng)
-    # df['t'] = df['t'].map(map_float_stirng)
-    # df['mut'] = df['mut'].map(map_float_stirng)
-    # df['gen'] = df['gen'].map(map_float_stirng)
-    # df['p_size'] = df['p_size'].map(map_float_stirng)
+    df['pop_F'] = df['pop_F'].map(map_func_ver)
+    df['cross_F'] = df['cross_F'].map(map_func_ver)
+    df['mut_F'] = df['mut_F'].map(map_func_ver)
+    df['d'] = df['d'].map(map_float_stirng)
+    df['t'] = df['t'].map(map_float_stirng)
+    df['mut'] = df['mut'].map(map_float_stirng)
+    df['gen'] = df['gen'].map(map_float_stirng)
+    df['p_size'] = df['p_size'].map(map_float_stirng)
 
     score_plot = df.groupby(['agent', *agent_param_list], dropna=False, sort=True, group_keys=False).agg({'solved': 'mean'}).plot(kind="barh", title="Solved % (Higher is better)", figsize=(20,20), xlim=(0,1))
     # Stop ticks rendered outside of the plot
