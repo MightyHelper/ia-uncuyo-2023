@@ -1,0 +1,247 @@
+---
+title: "tp7-eda.md"
+output: html_notebook
+---
+
+```{r}
+install.packages("dplyr")
+install.packages("ggplot2")
+install.packages("caret")
+```
+
+```{r}
+set.seed(123)
+library(dplyr)
+library(ggplot2)
+library(caret)
+library(rpart)
+library(utils)
+
+```
+
+```{r}
+arbolado.mza.dataset <- read.csv("~/workspace/arbolado-mza/arbolado-mza-dataset.csv/arbolado-mza-dataset.csv")
+arbolado.mza.dataset <- as.data.frame(arbolado.mza.dataset)
+```
+
+# 1.a
+
+```{r}
+indices <- createDataPartition(arbolado.mza.dataset$inclinacion_peligrosa, p = 0.8, list = FALSE)
+
+training_data <- arbolado.mza.dataset[indices, ]
+testing_data <- arbolado.mza.dataset[-indices, ]
+write.csv(testing_data, "arbolado-mendoza-validation.csv")
+write.csv(training_data, "arbolado-mendoza.csv")
+testing_data
+```
+# 2.a
+
+Parecen haber muchos (22695 vs 2835) mas ejemplares con inclinacion no peligrosa
+
+```{r}
+result <- training_data %>%
+  dplyr::group_by(inclinacion_peligrosa) %>%
+  dplyr::summarize(Count=n())
+x_val <- barplot(result$Count, names.arg=c("No Peligrosa", "Peligrosa"))
+# Add text labels on top of the bars
+text(x = x_val, y = result$Count, labels = result$Count, pos = 1, cex = 1)
+```
+# 2.b
+
+La seccion mas peligrosa parece ser la seccion 3.
+
+Cabe destacar que no tenemos informacion para las secciones 9 y 10 y muy poca info de las secciones 7 y 8
+
+```{r}
+result <- training_data %>%
+  dplyr::group_by(seccion) %>%
+  dplyr::summarize(peligrosa=sum(inclinacion_peligrosa), total=n())
+ggplot(data=result, aes(x=seccion, fill="a")) +
+  geom_bar(aes(y=total), stat="identity", position = "dodge", alpha=1, width=0.7, fill="darkgreen") +
+  labs(title="Por seccion", x="Seccion", y="Total") +
+  geom_bar(aes(y=peligrosa), data = result, stat = "identity", position="dodge", alpha = 1, width=0.7, fill="red") +
+  scale_x_continuous(breaks = result$seccion, expand = c(0, 0))+
+  scale_fill_manual(values = c("Total" = "darkgreen", "Peligrosas" = "red")) +
+  guides(fill = guide_legend(title = "Por seccion")) +
+  theme_minimal()
+
+result <- training_data %>%
+  dplyr::group_by(seccion) %>%
+  dplyr::summarize(peligrosa=sum(inclinacion_peligrosa)/ifelse(n() == 0, sum(inclinacion_peligrosa), n()), total=1)
+
+ggplot(data=result, aes(x=seccion, fill="a")) +
+  geom_bar(aes(y=total), stat="identity", position = "dodge", alpha=1, width=0.7, fill="darkgreen") +
+  labs(title="Por seccion", x="Seccion", y="Peligrosidad") +
+  geom_bar(aes(y=peligrosa), data = result, stat = "identity", position="dodge", alpha = 1, width=0.7, fill="red") +
+  scale_x_continuous(breaks = result$seccion, expand = c(0, 0))+
+  scale_fill_manual(values = c("Total" = "darkgreen", "Peligrosas" = "red")) +
+  guides(fill = guide_legend(title = "Por seccion Normalizada")) +
+  theme_minimal()
+```
+# 3.c
+
+Al parecer tenemos muchisima informacion de Moreras, en comparacion de otras especies.
+
+Aun asi, los algarrobos parecen presentar una inclinacion peligrosa con mayor frequencia.
+
+Dicho esto, solo tenemos 5 ejemplares de algarrobo en nuestro dataset de entrenamiento.
+
+```{r}
+result <- training_data %>%
+  dplyr::group_by(especie) %>%
+  dplyr::summarize(peligrosa=sum(inclinacion_peligrosa), total=n())
+
+result$especie = reorder(result$especie, -result$total)
+ggplot(data=result, aes(x=especie, fill="a")) +
+  geom_bar(aes(y=total), stat="identity", position = "dodge", alpha=1, width=0.7, fill="darkgreen") +
+  labs(title="Por especie", x="Especie", y="Total") +
+  geom_bar(aes(y=peligrosa), data = result, stat = "identity", position="dodge", alpha = 1, width=0.7, fill="red") +
+  scale_x_discrete(breaks = result$especie, expand = c(0, 0))+
+  scale_fill_manual(values = c("Total" = "darkgreen", "Peligrosas" = "red")) +
+  guides(fill = guide_legend(title = "Por especie")) +
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+result <- training_data %>%
+  dplyr::group_by(especie) %>%
+  dplyr::summarize(peligrosa=sum(inclinacion_peligrosa)/ifelse(n() == 0, sum(inclinacion_peligrosa), n()), total=1)
+
+result$especie = reorder(result$especie, -result$peligrosa)
+ggplot(data=result, aes(x=especie, fill="a")) +
+  geom_bar(aes(y=total), stat="identity", position = "dodge", alpha=1, width=0.7, fill="darkgreen") +
+  labs(title="Por especie", x="Especie", y="Total") +
+  geom_bar(aes(y=peligrosa), data = result, stat = "identity", position="dodge", alpha = 1, width=0.7, fill="red") +
+  scale_x_discrete(breaks = result$especie, expand = c(0, 0))+
+  scale_fill_manual(values = c("Total" = "darkgreen", "Peligrosas" = "red")) +
+  guides(fill = guide_legend(title = "Por especie")) +
+  theme_minimal()+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+```{r}
+training_data %>% filter(especie == "Algarrobo")
+```
+
+# 3.b
+
+```{r}
+hist_data <- hist(training_data$circ_tronco_cm, breaks=seq(min(training_data$circ_tronco_cm) - 2, max(training_data$circ_tronco_cm) + 10, by=10), main="Histograma de Circ Tronco", xlab="Circ Tronco", ylab="Frecuencia", col="lightblue", border="black")
+## plot(hist_data)
+```
+# 3.c
+
+No es una pregunta.
+
+No tiene mucho sentido hacer esto, ya que solo nos da la suma total por clase, que ya contamos antes.
+
+```{r}
+hist_data <- hist(training_data$inclinacion_peligrosa, breaks=seq(min(training_data$inclinacion_peligrosa) - 0.5, max(training_data$inclinacion_peligrosa) + 0.5, by=1), main="Histograma de Inclinacion peligrosa", xlab="Inclinacion peligrosa", ylab="Frecuencia", col="lightblue", border="black")
+## plot(hist_data)
+
+```
+
+```{r}
+result <- training_data %>%
+  mutate(
+    circ_tronco_cm_cat = case_when(
+      circ_tronco_cm <= quantile(circ_tronco_cm, 0.25) ~ "bajo",
+      circ_tronco_cm <= quantile(circ_tronco_cm, 0.50) ~ "medio",
+      circ_tronco_cm <= quantile(circ_tronco_cm, 0.75) ~ "alto",
+      TRUE ~ "muy alto"
+    )
+  ) %>% arrange(circ_tronco_cm)
+ggplot(result, aes(x = seq(1, nrow(result), by=1), y = circ_tronco_cm, color = circ_tronco_cm_cat)) +
+  geom_point() +
+  labs(title = "Q Circ Tronco CM",
+       x = "Sorted Index",
+       y = "CM Circ Tronco") +
+  scale_color_manual(values = c("red", "blue", "green", "magenta"))  # Customize colors if needed
+
+write.csv(result, file = "~/workspace/arbolado-mza/arbolado-mza-dataset.csv/arbolado-mza-dataset-circ_tronco_cm-train.csv", row.names = FALSE)
+
+```
+
+# 4.a/b/c/d / 6
+
+```{r}
+get_confusion <- function(datay, datay_hat) table(Actual = factor(datay, levels=c(0,1)), Predicted = factor(datay_hat, levels=c(0,1)))
+get_stats <- function(confusion){
+  TP <- confusion_matrix[1, 1]
+  TN <- confusion_matrix[2, 2]
+  FP <- confusion_matrix[2, 1]
+  FN <- confusion_matrix[1, 2]
+  
+  accuracy <- (TP + TN) / sum(confusion_matrix)
+  precision <- TP / (TP + FP)
+  sensitivity <- TP / (TP + FN)
+  specificity <- TN / (TN + FP)
+  
+  return(data.frame(accuracy=accuracy, precision=precision, sensitivity=sensitivity, specificity=specificity))
+}
+```
+
+```{r}
+set.seed(123)
+random_classifier <- function(training_data, p=0.5) function(testing_data) testing_data %>% mutate(y_hat_5050 = ifelse(runif(nrow(testing_data)) > p, 1, 0))
+random_predictions <- random_classifier(training_data)(testing_data)
+confusion_matrix <- get_confusion(random_predictions$inclinacion_peligrosa, random_predictions$y_hat_5050)
+confusion_matrix
+get_stats(confusion_matrix)
+```
+
+# 5.a/b/c/d / 6
+
+
+
+
+```{r}
+biggerclass_classifier <- function(train_data){
+  temp <- testing_data %>% group_by(inclinacion_peligrosa) %>% summarize(count=n()) %>% arrange(inclinacion_peligrosa)
+  selected_class <- temp[which.max(tab$count), 1]$inclinacion_peligrosa
+  return(function (test_data) (test_data %>% mutate(y_hat_bigger = selected_class)))
+}
+bigger_predictions <- biggerclass_classifier(training_data)(testing_data)
+confusion_matrix <- get_confusion(bigger_predictions$inclinacion_peligrosa, bigger_predictions$y_hat_bigger)
+confusion_matrix
+get_stats(confusion_matrix)
+```
+
+# 7
+```{r}
+tree_classifier <- function(train_data){
+  train_data$inclinacion_peligrosa <- factor(train_data$inclinacion_peligrosa)
+  tree_model<-rpart(inclinacion_peligrosa~altura+circ_tronco_cm+lat+long+seccion+especie, data=train_data, minsplit=1, minbucket=1)
+  print(tree_model)
+  return(function (test_data){
+    temp <- data.frame(test_data)
+    temp$y_hat_tree <- predict(tree_model, test_data, type="c")
+    return(temp)
+  })
+}
+
+# Attempt to train the tree with a nearer to 50% split in data, otherwise it just always returns class 0
+counts <- training_data %>% group_by(inclinacion_peligrosa) %>% summarize(count=n())
+ratio <- (counts[2, 2] / counts[1, 2])[1,1]
+ratio
+t <- random_classifier(training_data, ratio)(training_data) %>% filter(inclinacion_peligrosa == 1 | y_hat_5050 == 0)
+t %>% group_by(inclinacion_peligrosa) %>% summarize(count=n())
+tree_predictions <- tree_classifier(t)(testing_data) 
+confusion_matrix <- get_confusion(tree_predictions$inclinacion_peligrosa, tree_predictions$y_hat_tree)
+confusion_matrix
+get_stats(confusion_matrix)
+```
+
+```{r}
+test.data.set <- read.csv("~/workspace/arbolado-mza/arbolado-mza-dataset-test.csv/arbolado-mza-dataset-test.csv")
+result.validation <- tree_classifier(t)(test.data.set)
+columns <- result.validation[,c("id","y_hat_tree")]
+columns$id = as.numeric(columns$id)
+columns$y_hat_tree = as.numeric(columns$y_hat_tree)
+columns<-data.frame(columns)
+columns[names(columns) == "y_hat_tree"] <-columns[names(columns) == "y_hat_tree"] - 1
+names(columns)[names(columns) == "y_hat_tree"] <- "inclinacion_peligrosa"
+
+write.csv(columns, file = "~/workspace/arbolado-mza/predictions/simple_tree_123.csv", row.names=F, append=FALSE, quote=FALSE)
+```
