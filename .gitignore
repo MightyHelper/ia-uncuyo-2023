@@ -1,2 +1,4 @@
 **/*.pyc
 **/*.ignore.*
+tp7-ml/code/wandb/**
+tp7-ml/code/wandb/

@@ -1,0 +1,3 @@
+[submodule "proyecto_final"]
+	path = proyecto_final
+	url = git@github.com:MightyHelper/ia-final-2023.git
